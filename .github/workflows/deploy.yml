@@ -1,0 +1,77 @@
+name: Deploy Shinobi Artillery to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build application
+        run: npm run build
+
+      - name: Include studio-exported assets if present in repository root
+        run: |
+          if [ -d assets ]; then
+            mkdir -p dist/assets
+            cp -r assets/. dist/assets/
+          fi
+          if [ -d game-assets ]; then
+            mkdir -p dist/game-assets
+            cp -r game-assets/. dist/game-assets/
+          fi
+          if [ -f index.json ] && [ -d characters ]; then
+            cp index.json dist/index.json
+            mkdir -p dist/characters
+            cp -r characters/. dist/characters/
+          fi
+          touch dist/.nojekyll
+          cp dist/index.html dist/404.html
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
