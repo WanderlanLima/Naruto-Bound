@@ -1,0 +1,159 @@
+
+efeito_MRJLM123_3.webp
+size: 1024,832
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+f1
+  rotate: false
+  xy: 1, 1
+  size: 575, 168
+  orig: 577, 170
+  offset: 1, 1
+  index: -1
+f12
+  rotate: false
+  xy: 1, 727
+  size: 354, 91
+  orig: 357, 93
+  offset: 1, 1
+  index: -1
+f12~n3f0fa63ee6
+  rotate: false
+  xy: 357, 727
+  size: 354, 91
+  orig: 357, 93
+  offset: 1, 1
+  index: -1
+f1~n3f0fa63ee6
+  rotate: false
+  xy: 1, 171
+  size: 575, 168
+  orig: 577, 170
+  offset: 1, 1
+  index: -1
+f3
+  rotate: false
+  xy: 1, 341
+  size: 508, 176
+  orig: 511, 178
+  offset: 1, 1
+  index: -1
+f3~n3f0fa63ee6
+  rotate: false
+  xy: 511, 341
+  size: 508, 176
+  orig: 511, 178
+  offset: 1, 1
+  index: -1
+f5
+  rotate: false
+  xy: 1, 519
+  size: 495, 206
+  orig: 498, 208
+  offset: 2, 1
+  index: -1
+f5~n3f0fa63ee6
+  rotate: false
+  xy: 498, 519
+  size: 495, 206
+  orig: 498, 208
+  offset: 2, 1
+  index: -1
+f7
+  rotate: false
+  xy: 578, 1
+  size: 361, 156
+  orig: 363, 158
+  offset: 1, 1
+  index: -1
+f7~n3f0fa63ee6
+  rotate: false
+  xy: 578, 159
+  size: 361, 156
+  orig: 363, 158
+  offset: 1, 1
+  index: -1
+
+efeito_MRJLM123_3_2.webp
+size: 832,768
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+f10
+  rotate: false
+  xy: 257, 181
+  size: 247, 177
+  orig: 413, 204
+  offset: 91, 17
+  index: -1
+f15
+  rotate: false
+  xy: 407, 1
+  size: 400, 178
+  orig: 413, 204
+  offset: 0, 17
+  index: -1
+f18
+  rotate: false
+  xy: 1, 1
+  size: 404, 177
+  orig: 413, 204
+  offset: 0, 17
+  index: -1
+f21
+  rotate: false
+  xy: 1, 180
+  size: 254, 178
+  orig: 413, 204
+  offset: 85, 17
+  index: -1
+f24
+  rotate: false
+  xy: 254, 537
+  size: 250, 179
+  orig: 413, 204
+  offset: 89, 16
+  index: -1
+f27
+  rotate: false
+  xy: 506, 181
+  size: 250, 177
+  orig: 413, 204
+  offset: 89, 18
+  index: -1
+f30
+  rotate: false
+  xy: 1, 537
+  size: 251, 175
+  orig: 413, 204
+  offset: 89, 18
+  index: -1
+f33
+  rotate: false
+  xy: 1, 360
+  size: 253, 175
+  orig: 413, 204
+  offset: 88, 18
+  index: -1
+f36
+  rotate: false
+  xy: 506, 536
+  size: 247, 171
+  orig: 413, 204
+  offset: 91, 21
+  index: -1
+f39
+  rotate: false
+  xy: 508, 360
+  size: 247, 174
+  orig: 413, 204
+  offset: 91, 19
+  index: -1
+f42
+  rotate: false
+  xy: 256, 360
+  size: 250, 154
+  orig: 413, 204
+  offset: 91, 27
+  index: -1

@@ -1,0 +1,709 @@
+{
+  "schemaVersion": "shinobi-phaser-v1",
+  "id": "vdfno_100304",
+  "code": "100304",
+  "name": "Naruto Kurama",
+  "width": 160,
+  "height": 191,
+  "fps": 24,
+  "facing": "right",
+  "roles": {
+    "skills": [
+      "skill",
+      "chase1",
+      "gatilho1"
+    ],
+    "idle": "idle",
+    "move": "run",
+    "fly": "fly",
+    "jump": "fly",
+    "fall": "fall",
+    "attack": "attack",
+    "ultimate": "UniqueSkill",
+    "chase": "chase1",
+    "hurt": "hurt1",
+    "die": "die",
+    "win": "win"
+  },
+  "animations": [
+    {
+      "slug": "idle",
+      "originalName": "idle",
+      "role": "idle",
+      "fps": 24,
+      "frameCount": 36,
+      "durationMs": 1500,
+      "cellWidth": 160,
+      "cellHeight": 191,
+      "multiatlas": false,
+      "jsonFile": "anims/idle.json",
+      "imageFiles": [
+        "anims/idle.png"
+      ]
+    },
+    {
+      "slug": "run",
+      "originalName": "run",
+      "role": "move",
+      "fps": 24,
+      "frameCount": 4,
+      "durationMs": 167,
+      "cellWidth": 216,
+      "cellHeight": 160,
+      "multiatlas": false,
+      "jsonFile": "anims/run.json",
+      "imageFiles": [
+        "anims/run.png"
+      ]
+    },
+    {
+      "slug": "fly",
+      "originalName": "fly",
+      "role": "fly",
+      "fps": 24,
+      "frameCount": 15,
+      "durationMs": 625,
+      "cellWidth": 190,
+      "cellHeight": 215,
+      "multiatlas": false,
+      "jsonFile": "anims/fly.json",
+      "imageFiles": [
+        "anims/fly.png"
+      ]
+    },
+    {
+      "slug": "fall",
+      "originalName": "fall",
+      "role": "fall",
+      "fps": 24,
+      "frameCount": 17,
+      "durationMs": 708,
+      "cellWidth": 187,
+      "cellHeight": 160,
+      "multiatlas": false,
+      "jsonFile": "anims/fall.json",
+      "imageFiles": [
+        "anims/fall.png"
+      ]
+    },
+    {
+      "slug": "attack",
+      "originalName": "attack",
+      "role": "attack",
+      "fps": 24,
+      "frameCount": 20,
+      "durationMs": 833,
+      "cellWidth": 332,
+      "cellHeight": 279,
+      "multiatlas": false,
+      "jsonFile": "anims/attack.json",
+      "imageFiles": [
+        "anims/attack.png"
+      ]
+    },
+    {
+      "slug": "skill",
+      "originalName": "skill",
+      "role": "skill",
+      "fps": 24,
+      "frameCount": 49,
+      "durationMs": 2042,
+      "cellWidth": 739,
+      "cellHeight": 639,
+      "multiatlas": false,
+      "jsonFile": "anims/skill.json",
+      "imageFiles": [
+        "anims/skill.png"
+      ]
+    },
+    {
+      "slug": "UniqueSkill",
+      "originalName": "UniqueSkill",
+      "role": "ultimate",
+      "fps": 24,
+      "frameCount": 180,
+      "durationMs": 7750,
+      "cellWidth": 568,
+      "cellHeight": 648,
+      "multiatlas": false,
+      "jsonFile": "anims/UniqueSkill.json",
+      "imageFiles": [
+        "anims/UniqueSkill.png"
+      ]
+    },
+    {
+      "slug": "chase1",
+      "originalName": "chase1",
+      "role": "chase",
+      "fps": 24,
+      "frameCount": 78,
+      "durationMs": 3250,
+      "cellWidth": 1319,
+      "cellHeight": 627,
+      "multiatlas": false,
+      "jsonFile": "anims/chase1.json",
+      "imageFiles": [
+        "anims/chase1.png"
+      ]
+    },
+    {
+      "slug": "gatilho1",
+      "originalName": "gatilho1",
+      "role": "skill",
+      "fps": 24,
+      "frameCount": 37,
+      "durationMs": 1542,
+      "cellWidth": 429,
+      "cellHeight": 439,
+      "multiatlas": false,
+      "jsonFile": "anims/gatilho1.json",
+      "imageFiles": [
+        "anims/gatilho1.png"
+      ]
+    },
+    {
+      "slug": "hurt1",
+      "originalName": "hurt1",
+      "role": "hurt",
+      "fps": 24,
+      "frameCount": 7,
+      "durationMs": 292,
+      "cellWidth": 160,
+      "cellHeight": 184,
+      "multiatlas": false,
+      "jsonFile": "anims/hurt1.json",
+      "imageFiles": [
+        "anims/hurt1.png"
+      ]
+    },
+    {
+      "slug": "hurt2",
+      "originalName": "hurt2",
+      "role": "hurt2",
+      "fps": 24,
+      "frameCount": 7,
+      "durationMs": 292,
+      "cellWidth": 160,
+      "cellHeight": 160,
+      "multiatlas": false,
+      "jsonFile": "anims/hurt2.json",
+      "imageFiles": [
+        "anims/hurt2.png"
+      ]
+    },
+    {
+      "slug": "hurtlong1",
+      "originalName": "hurtlong1",
+      "role": "hurtlong1",
+      "fps": 24,
+      "frameCount": 19,
+      "durationMs": 792,
+      "cellWidth": 228,
+      "cellHeight": 237,
+      "multiatlas": false,
+      "jsonFile": "anims/hurtlong1.json",
+      "imageFiles": [
+        "anims/hurtlong1.png"
+      ]
+    },
+    {
+      "slug": "hurtlong2",
+      "originalName": "hurtlong2",
+      "role": "hurtlong2",
+      "fps": 24,
+      "frameCount": 10,
+      "durationMs": 417,
+      "cellWidth": 167,
+      "cellHeight": 189,
+      "multiatlas": false,
+      "jsonFile": "anims/hurtlong2.json",
+      "imageFiles": [
+        "anims/hurtlong2.png"
+      ]
+    },
+    {
+      "slug": "die",
+      "originalName": "die",
+      "role": "die",
+      "fps": 24,
+      "frameCount": 17,
+      "durationMs": 708,
+      "cellWidth": 160,
+      "cellHeight": 201,
+      "multiatlas": false,
+      "jsonFile": "anims/die.json",
+      "imageFiles": [
+        "anims/die.png"
+      ]
+    },
+    {
+      "slug": "win",
+      "originalName": "win",
+      "role": "win",
+      "fps": 24,
+      "frameCount": 12,
+      "durationMs": 500,
+      "cellWidth": 370,
+      "cellHeight": 678,
+      "multiatlas": false,
+      "jsonFile": "anims/win.json",
+      "imageFiles": [
+        "anims/win.png"
+      ]
+    },
+    {
+      "slug": "charge",
+      "originalName": "charge",
+      "role": "charge",
+      "fps": 24,
+      "frameCount": 12,
+      "durationMs": 500,
+      "cellWidth": 160,
+      "cellHeight": 160,
+      "multiatlas": false,
+      "jsonFile": "anims/charge.json",
+      "imageFiles": [
+        "anims/charge.png"
+      ]
+    },
+    {
+      "slug": "cast",
+      "originalName": "cast",
+      "role": "cast",
+      "fps": 24,
+      "frameCount": 8,
+      "durationMs": 333,
+      "cellWidth": 160,
+      "cellHeight": 173,
+      "multiatlas": false,
+      "jsonFile": "anims/cast.json",
+      "imageFiles": [
+        "anims/cast.png"
+      ]
+    },
+    {
+      "slug": "dodge",
+      "originalName": "dodge",
+      "role": "dodge",
+      "fps": 24,
+      "frameCount": 4,
+      "durationMs": 167,
+      "cellWidth": 160,
+      "cellHeight": 160,
+      "multiatlas": false,
+      "jsonFile": "anims/dodge.json",
+      "imageFiles": [
+        "anims/dodge.png"
+      ]
+    },
+    {
+      "slug": "shunyi",
+      "originalName": "shunyi",
+      "role": "shunyi",
+      "fps": 24,
+      "frameCount": 12,
+      "durationMs": 500,
+      "cellWidth": 167,
+      "cellHeight": 160,
+      "multiatlas": false,
+      "jsonFile": "anims/shunyi.json",
+      "imageFiles": [
+        "anims/shunyi.png"
+      ]
+    },
+    {
+      "slug": "out",
+      "originalName": "out",
+      "role": "out",
+      "fps": 24,
+      "frameCount": 11,
+      "durationMs": 458,
+      "cellWidth": 370,
+      "cellHeight": 573,
+      "multiatlas": false,
+      "jsonFile": "anims/out.json",
+      "imageFiles": [
+        "anims/out.png"
+      ]
+    }
+  ],
+  "effects": [],
+  "legacySpineEffects": [
+    {
+      "spineId": "noe_JMRaoyi",
+      "jsonFile": "particulas/noe_JMRaoyi/noe_JMRaoyi.json",
+      "atlasFile": "particulas/noe_JMRaoyi/noe_JMRaoyi.atlas",
+      "imageFiles": [
+        "particulas/noe_JMRaoyi/efeito_JMRaoyi.webp",
+        "particulas/noe_JMRaoyi/efeito_JMRaoyi_2.webp",
+        "particulas/noe_JMRaoyi/efeito_JMRaoyi_3.webp"
+      ]
+    },
+    {
+      "spineId": "noe_MRJLM123",
+      "jsonFile": "particulas/noe_MRJLM123/noe_MRJLM123.json",
+      "atlasFile": "particulas/noe_MRJLM123/noe_MRJLM123.atlas",
+      "imageFiles": [
+        "particulas/noe_MRJLM123/efeito_MRJLM123.webp",
+        "particulas/noe_MRJLM123/efeito_MRJLM123_2.webp"
+      ]
+    },
+    {
+      "spineId": "noe_MRJLM123_3",
+      "jsonFile": "particulas/noe_MRJLM123_3/noe_MRJLM123_3.json",
+      "atlasFile": "particulas/noe_MRJLM123_3/noe_MRJLM123_3.atlas",
+      "imageFiles": [
+        "particulas/noe_MRJLM123_3/efeito_MRJLM123_3.webp",
+        "particulas/noe_MRJLM123_3/efeito_MRJLM123_3_2.webp"
+      ]
+    },
+    {
+      "spineId": "noe_MRJLMcmnwsy",
+      "jsonFile": "particulas/noe_MRJLMcmnwsy/noe_MRJLMcmnwsy.json",
+      "atlasFile": "particulas/noe_MRJLMcmnwsy/noe_MRJLMcmnwsy.atlas",
+      "imageFiles": [
+        "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy.webp",
+        "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy_2.webp",
+        "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy_3.webp",
+        "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy_4.webp",
+        "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy_5.webp"
+      ]
+    },
+    {
+      "spineId": "noe_MRzy",
+      "jsonFile": "particulas/noe_MRzy/noe_MRzy.json",
+      "atlasFile": "particulas/noe_MRzy/noe_MRzy.atlas",
+      "imageFiles": [
+        "particulas/noe_MRzy/efeito_MRzy.webp"
+      ]
+    }
+  ],
+  "audio": [
+    {
+      "name": "nos_1106_1",
+      "originalName": "nos_1106_1",
+      "file": "audio/nos_1106_1.mp3"
+    },
+    {
+      "name": "nos_114_1",
+      "originalName": "nos_114_1",
+      "file": "audio/nos_114_1.mp3"
+    },
+    {
+      "name": "nos_125_1",
+      "originalName": "nos_125_1",
+      "file": "audio/nos_125_1.mp3"
+    },
+    {
+      "name": "nos_134_3",
+      "originalName": "nos_134_3",
+      "file": "audio/nos_134_3.mp3"
+    },
+    {
+      "name": "nos_136_3",
+      "originalName": "nos_136_3",
+      "file": "audio/nos_136_3.mp3"
+    },
+    {
+      "name": "nos_139_1",
+      "originalName": "nos_139_1",
+      "file": "audio/nos_139_1.mp3"
+    },
+    {
+      "name": "nos_146_3",
+      "originalName": "nos_146_3",
+      "file": "audio/nos_146_3.mp3"
+    },
+    {
+      "name": "nos_148_1",
+      "originalName": "nos_148_1",
+      "file": "audio/nos_148_1.mp3"
+    },
+    {
+      "name": "nos_1493_1",
+      "originalName": "nos_1493_1",
+      "file": "audio/nos_1493_1.mp3"
+    },
+    {
+      "name": "nos_149_2",
+      "originalName": "nos_149_2",
+      "file": "audio/nos_149_2.mp3"
+    },
+    {
+      "name": "nos_152_5",
+      "originalName": "nos_152_5",
+      "file": "audio/nos_152_5.mp3"
+    },
+    {
+      "name": "nos_153_1",
+      "originalName": "nos_153_1",
+      "file": "audio/nos_153_1.mp3"
+    },
+    {
+      "name": "nos_156_1",
+      "originalName": "nos_156_1",
+      "file": "audio/nos_156_1.mp3"
+    },
+    {
+      "name": "nos_157_2",
+      "originalName": "nos_157_2",
+      "file": "audio/nos_157_2.mp3"
+    },
+    {
+      "name": "nos_170_1",
+      "originalName": "nos_170_1",
+      "file": "audio/nos_170_1.mp3"
+    },
+    {
+      "name": "nos_172_3",
+      "originalName": "nos_172_3",
+      "file": "audio/nos_172_3.mp3"
+    },
+    {
+      "name": "nos_173_2",
+      "originalName": "nos_173_2",
+      "file": "audio/nos_173_2.mp3"
+    },
+    {
+      "name": "nos_174_1",
+      "originalName": "nos_174_1",
+      "file": "audio/nos_174_1.mp3"
+    },
+    {
+      "name": "nos_175_1",
+      "originalName": "nos_175_1",
+      "file": "audio/nos_175_1.mp3"
+    },
+    {
+      "name": "nos_177_1",
+      "originalName": "nos_177_1",
+      "file": "audio/nos_177_1.mp3"
+    },
+    {
+      "name": "nos_236_2",
+      "originalName": "nos_236_2",
+      "file": "audio/nos_236_2.mp3"
+    },
+    {
+      "name": "nos_284_2",
+      "originalName": "nos_284_2",
+      "file": "audio/nos_284_2.mp3"
+    },
+    {
+      "name": "nos_285_3",
+      "originalName": "nos_285_3",
+      "file": "audio/nos_285_3.mp3"
+    },
+    {
+      "name": "nos_286_2",
+      "originalName": "nos_286_2",
+      "file": "audio/nos_286_2.mp3"
+    },
+    {
+      "name": "nos_287_1",
+      "originalName": "nos_287_1",
+      "file": "audio/nos_287_1.mp3"
+    },
+    {
+      "name": "nos_288_2",
+      "originalName": "nos_288_2",
+      "file": "audio/nos_288_2.mp3"
+    },
+    {
+      "name": "nos_44_1",
+      "originalName": "nos_44_1",
+      "file": "audio/nos_44_1.mp3"
+    },
+    {
+      "name": "nos_660_1",
+      "originalName": "nos_660_1",
+      "file": "audio/nos_660_1.mp3"
+    },
+    {
+      "name": "nos_685_4",
+      "originalName": "nos_685_4",
+      "file": "audio/nos_685_4.mp3"
+    },
+    {
+      "name": "nos_934_2",
+      "originalName": "nos_934_2",
+      "file": "audio/nos_934_2.mp3"
+    },
+    {
+      "name": "nos_937_2",
+      "originalName": "nos_937_2",
+      "file": "audio/nos_937_2.mp3"
+    },
+    {
+      "name": "batalha_nos_1552_1",
+      "originalName": "batalha_nos_1552_1",
+      "file": "audio/batalha_nos_1552_1.mp3"
+    },
+    {
+      "name": "batalha_nos_1552_2",
+      "originalName": "batalha_nos_1552_2",
+      "file": "audio/batalha_nos_1552_2.mp3"
+    },
+    {
+      "name": "despertar_nos_1555_1",
+      "originalName": "despertar_nos_1555_1",
+      "file": "audio/despertar_nos_1555_1.mp3"
+    },
+    {
+      "name": "despertar_nos_1555_2",
+      "originalName": "despertar_nos_1555_2",
+      "file": "audio/despertar_nos_1555_2.mp3"
+    },
+    {
+      "name": "morte_nos_661_1",
+      "originalName": "morte_nos_661_1",
+      "file": "audio/morte_nos_661_1.mp3"
+    },
+    {
+      "name": "subir_estrela_nos_1555_1",
+      "originalName": "subir_estrela_nos_1555_1",
+      "file": "audio/subir_estrela_nos_1555_1.mp3"
+    },
+    {
+      "name": "subir_estrela_nos_1555_2",
+      "originalName": "subir_estrela_nos_1555_2",
+      "file": "audio/subir_estrela_nos_1555_2.mp3"
+    },
+    {
+      "name": "transformacao_nos_1554_1",
+      "originalName": "transformacao_nos_1554_1",
+      "file": "audio/transformacao_nos_1554_1.mp3"
+    }
+  ],
+  "videos": [
+    {
+      "name": "vdfno_MINGRENjlm",
+      "originalName": "vdfno_MINGRENjlm",
+      "file": "videos/vdfno_MINGRENjlm.mp4"
+    }
+  ],
+  "files": [
+    "combate_e_habilidades.json",
+    "animacoes_instrucoes.json",
+    "artes/01_arte_completa_100304.png",
+    "artes/02_meio_corpo_100304.png",
+    "artes/03_retrato_medio_100304.png",
+    "artes/04_vitrine_100304.png",
+    "artes/05_recrutamento_100304.png",
+    "artes/06_palco_100304.png",
+    "artes/07_album_100304.png",
+    "artes/08_avatar_100304.png",
+    "artes/10_nome_pt_100304.png",
+    "artes/11_nome_novo_100304.png",
+    "artes/12_nome_esoterica_100304.png",
+    "icones_skills/01_ataque_normal_Ataque_da_Kurama.png",
+    "icones_skills/02_habilidade_Ataque_da_Kurama.png",
+    "icones_skills/03_ultimate_Rasen_Shuriken_Planetario_de_Bijuu.png",
+    "icones_skills/04_perseguicao_1_Super_Mini_Bomba_Bijuu.png",
+    "icones_skills/passiva_01_Jutsu_de_Teletransporte_Dourado.png",
+    "icones_skills/passiva_02_Chakra_do_Bijuu_Imunidade.png",
+    "audio/nos_1106_1.mp3",
+    "audio/nos_114_1.mp3",
+    "audio/nos_125_1.mp3",
+    "audio/nos_134_3.mp3",
+    "audio/nos_136_3.mp3",
+    "audio/nos_139_1.mp3",
+    "audio/nos_146_3.mp3",
+    "audio/nos_148_1.mp3",
+    "audio/nos_1493_1.mp3",
+    "audio/nos_149_2.mp3",
+    "audio/nos_152_5.mp3",
+    "audio/nos_153_1.mp3",
+    "audio/nos_156_1.mp3",
+    "audio/nos_157_2.mp3",
+    "audio/nos_170_1.mp3",
+    "audio/nos_172_3.mp3",
+    "audio/nos_173_2.mp3",
+    "audio/nos_174_1.mp3",
+    "audio/nos_175_1.mp3",
+    "audio/nos_177_1.mp3",
+    "audio/nos_236_2.mp3",
+    "audio/nos_284_2.mp3",
+    "audio/nos_285_3.mp3",
+    "audio/nos_286_2.mp3",
+    "audio/nos_287_1.mp3",
+    "audio/nos_288_2.mp3",
+    "audio/nos_44_1.mp3",
+    "audio/nos_660_1.mp3",
+    "audio/nos_685_4.mp3",
+    "audio/nos_934_2.mp3",
+    "audio/nos_937_2.mp3",
+    "audio/batalha_nos_1552_1.mp3",
+    "audio/batalha_nos_1552_2.mp3",
+    "audio/despertar_nos_1555_1.mp3",
+    "audio/despertar_nos_1555_2.mp3",
+    "audio/morte_nos_661_1.mp3",
+    "audio/subir_estrela_nos_1555_1.mp3",
+    "audio/subir_estrela_nos_1555_2.mp3",
+    "audio/transformacao_nos_1554_1.mp3",
+    "videos/vdfno_MINGRENjlm.mp4",
+    "particulas/noe_JMRaoyi/efeito_JMRaoyi.webp",
+    "particulas/noe_JMRaoyi/efeito_JMRaoyi_2.webp",
+    "particulas/noe_JMRaoyi/efeito_JMRaoyi_3.webp",
+    "particulas/noe_JMRaoyi/noe_JMRaoyi.atlas",
+    "particulas/noe_JMRaoyi/noe_JMRaoyi.json",
+    "particulas/noe_MRJLM123/efeito_MRJLM123.webp",
+    "particulas/noe_MRJLM123/efeito_MRJLM123_2.webp",
+    "particulas/noe_MRJLM123/noe_MRJLM123.atlas",
+    "particulas/noe_MRJLM123/noe_MRJLM123.json",
+    "particulas/noe_MRJLM123_3/efeito_MRJLM123_3.webp",
+    "particulas/noe_MRJLM123_3/efeito_MRJLM123_3_2.webp",
+    "particulas/noe_MRJLM123_3/noe_MRJLM123_3.atlas",
+    "particulas/noe_MRJLM123_3/noe_MRJLM123_3.json",
+    "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy.webp",
+    "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy_2.webp",
+    "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy_3.webp",
+    "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy_4.webp",
+    "particulas/noe_MRJLMcmnwsy/efeito_MRJLMcmnwsy_5.webp",
+    "particulas/noe_MRJLMcmnwsy/noe_MRJLMcmnwsy.atlas",
+    "particulas/noe_MRJLMcmnwsy/noe_MRJLMcmnwsy.json",
+    "particulas/noe_MRzy/efeito_MRzy.webp",
+    "particulas/noe_MRzy/noe_MRzy.atlas",
+    "particulas/noe_MRzy/noe_MRzy.json",
+    "anims/idle.json",
+    "anims/idle.png",
+    "anims/run.json",
+    "anims/run.png",
+    "anims/fly.json",
+    "anims/fly.png",
+    "anims/fall.json",
+    "anims/fall.png",
+    "anims/attack.json",
+    "anims/attack.png",
+    "anims/skill.json",
+    "anims/skill.png",
+    "anims/UniqueSkill.json",
+    "anims/UniqueSkill.png",
+    "anims/chase1.json",
+    "anims/chase1.png",
+    "anims/gatilho1.json",
+    "anims/gatilho1.png",
+    "anims/hurt1.json",
+    "anims/hurt1.png",
+    "anims/hurt2.json",
+    "anims/hurt2.png",
+    "anims/hurtlong1.json",
+    "anims/hurtlong1.png",
+    "anims/hurtlong2.json",
+    "anims/hurtlong2.png",
+    "anims/die.json",
+    "anims/die.png",
+    "anims/win.json",
+    "anims/win.png",
+    "anims/charge.json",
+    "anims/charge.png",
+    "anims/cast.json",
+    "anims/cast.png",
+    "anims/dodge.json",
+    "anims/dodge.png",
+    "anims/shunyi.json",
+    "anims/shunyi.png",
+    "anims/out.json",
+    "anims/out.png"
+  ]
+}

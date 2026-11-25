@@ -1,0 +1,241 @@
+{
+  "schemaVersion": "shinobi-combat-v1",
+  "characterId": "vdfno_100306",
+  "heroCode": "100306",
+  "displayName": "Sasuke [Susano’o]",
+  "chaseSystemLegend": {
+    "fall": "Queda / Derrubado (alvo cai no chão)",
+    "popup": "Flutuação Baixa (alvo é lançado em baixa altitude)",
+    "launcher": "Flutuação Alta (alvo é lançado em grande altitude)",
+    "back": "Empurrão / Repelido (alvo é arremessado para trás)"
+  },
+  "combatProfile": {
+    "heroCode": "100306",
+    "name": "Sasuke [Susano’o]",
+    "combatRole": "tank",
+    "combatRoleLabel": "Tanque",
+    "natureId": 5,
+    "nature": "thunder",
+    "natureLabel": "Relâmpago",
+    "quality": 10,
+    "star": 1,
+    "maxStar": 10,
+    "tags": [
+      "thunder"
+    ],
+    "baseStats": {
+      "hp": 2350,
+      "attack": 434,
+      "defense": 104,
+      "hpGrowth": 2.3687,
+      "attackGrowth": 1.5899,
+      "defenseGrowth": 1.378,
+      "crit": 0,
+      "uncrit": 0.04,
+      "critDeepen": 0,
+      "block": 0.05,
+      "unblock": 0,
+      "blockDeepen": 0,
+      "hurtBonus": 0,
+      "hurtReduction": 0.04,
+      "skillRate": 0.4,
+      "lifesteal": 0,
+      "control": 0,
+      "uncontrol": 0,
+      "cure": 0,
+      "ultimateDamage": 0,
+      "ultimateDefense": 0
+    },
+    "chakraAnger": {
+      "base": 0,
+      "rules": {
+        "m1": {
+          "a1": 30,
+          "a2": 700
+        },
+        "m2": {
+          "a1": 180
+        },
+        "m3": {
+          "a1": 200
+        },
+        "m4": {
+          "a1": 0
+        },
+        "m5": {
+          "a1": 100
+        }
+      }
+    },
+    "chaseComboSummary": {
+      "initiators": [],
+      "chasers": [
+        {
+          "slot": "chase1",
+          "skillId": "hero306_c1",
+          "skillName": "Susano'o: Ataque",
+          "requiresStates": [
+            "popup"
+          ],
+          "requiresStateLabels": [
+            "Flutuação Baixa"
+          ]
+        },
+        {
+          "slot": "chase2",
+          "skillId": "hero306_c2",
+          "skillName": "Estilo Inferno: Controle de Chamas",
+          "requiresStates": [
+            "popup"
+          ],
+          "requiresStateLabels": [
+            "Flutuação Baixa"
+          ]
+        }
+      ]
+    }
+  },
+  "skills": {
+    "attack": {
+      "id": "hero306_n1",
+      "animKey": "attack",
+      "slotLabel": "Ataque Normal",
+      "name": "Espada Chidori",
+      "desc": "Atinge um inimigo com 100% de dano de taijutsu e ninjutsu e arremessa ao alto.",
+      "descPlain": "Atinge um inimigo com 100% de dano de taijutsu e ninjutsu e arremessa ao alto.",
+      "skillType": 0,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "effectIds": [
+        "hero306_n1_1"
+      ],
+      "iconName": "skill_hero306_n1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero306_n1.png",
+      "iconFile": "icones_skills/01_ataque_normal_Espada_Chidori.png"
+    },
+    "skill": {
+      "id": "hero306_a1",
+      "animKey": "skill",
+      "slotLabel": "Habilidade",
+      "name": "Espada Chidori",
+      "desc": "Atinge um inimigo com 150% de dano de taijutsu e ninjutsu e arremessa ao alto.",
+      "descPlain": "Atinge um inimigo com 150% de dano de taijutsu e ninjutsu e arremessa ao alto.",
+      "skillType": 1,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "effectIds": [
+        "hero306_a1_1"
+      ],
+      "iconName": "skill_hero306_a1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero306_a1.png",
+      "iconFile": "icones_skills/02_habilidade_Espada_Chidori.png"
+    },
+    "UniqueSkill": {
+      "id": "hero306_s1",
+      "animKey": "UniqueSkill",
+      "slotLabel": "Ôgi (Ultimate)",
+      "name": "Susano'o",
+      "desc": "Atinge todos os inimigos com 155% de dano de taijutsu e ninjutsu e repele.",
+      "descPlain": "Atinge todos os inimigos com 155% de dano de taijutsu e ninjutsu e repele.",
+      "skillType": 2,
+      "targetFlags": [
+        "ENEMY_ALL"
+      ],
+      "targetType": "all_enemies",
+      "targetLabel": "Todos os Inimigos",
+      "effectIds": [
+        "hero306_s1_1"
+      ],
+      "iconName": "skill_hero306_s1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero306_s1.png",
+      "iconFile": "icones_skills/03_ultimate_Susano_o.png"
+    },
+    "chase1": {
+      "id": "hero306_c1",
+      "animKey": "chase1",
+      "slotLabel": "Perseguição 1",
+      "name": "Susano'o: Ataque",
+      "desc": "Persegue alvos (Combo de 10): atinge 2 inimigos aleatórios com 45% de dano de taijutsu e ninjutsu.",
+      "descPlain": "Persegue alvos (Combo de 10): atinge 2 inimigos aleatórios com 45% de dano de taijutsu e ninjutsu.",
+      "skillType": 15,
+      "targetFlags": [
+        "ENEMY_RANDOM_2"
+      ],
+      "targetType": "random_enemies",
+      "targetLabel": "2 Inimigos Aleatórios",
+      "chaseTriggers": [
+        "popup"
+      ],
+      "chaseTriggerLabels": [
+        "Flutuação Baixa"
+      ],
+      "effectIds": [
+        "hero306_c1_1"
+      ],
+      "iconName": "skill_hero306_c1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero306_c1.png",
+      "iconFile": "icones_skills/04_perseguicao_1_Susano_o_Ataque.png"
+    },
+    "chase2": {
+      "id": "hero306_c2",
+      "animKey": "chase2",
+      "slotLabel": "Perseguição 2",
+      "name": "Estilo Inferno: Controle de Chamas",
+      "desc": "Persegue alvos (Flutuação): atinge um inimigo com 50% de dano de ninjutsu e lança para o alto; queima por 3 rodadas.",
+      "descPlain": "Persegue alvos (Flutuação): atinge um inimigo com 50% de dano de ninjutsu e lança para o alto; queima por 3 rodadas.",
+      "skillType": 15,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "chaseTriggers": [
+        "popup"
+      ],
+      "chaseTriggerLabels": [
+        "Flutuação Baixa"
+      ],
+      "effectIds": [
+        "hero306_c2_1",
+        "hero306_c2_2"
+      ],
+      "iconName": "skill_hero306_c2",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero306_c2.png",
+      "iconFile": "icones_skills/05_perseguicao_2_Estilo_Inferno_Controle_de_Chamas.png"
+    }
+  },
+  "passives": [
+    {
+      "id": "hero306_p1",
+      "name": "Armadura: Susano'o",
+      "desc": "Resistência a controle +25%.",
+      "descPlain": "Resistência a controle +25%.",
+      "iconName": "skill_hero306_p1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero306_p1.png",
+      "skillType": 3,
+      "effectIds": [
+        "hero306_p1_1"
+      ],
+      "iconFile": "icones_skills/passiva_01_Armadura_Susano_o.png"
+    },
+    {
+      "id": "hero306_p2",
+      "name": "Corpo Resistente",
+      "desc": "Redução de dano +8%.",
+      "descPlain": "Redução de dano +8%.",
+      "iconName": "skill_hero306_p2",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero306_p2.png",
+      "skillType": 3,
+      "effectIds": [
+        "hero306_p2_1"
+      ],
+      "iconFile": "icones_skills/passiva_02_Corpo_Resistente.png"
+    }
+  ]
+}

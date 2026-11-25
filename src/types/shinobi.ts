@@ -174,6 +174,12 @@ export interface GameCharacterManifest {
     jsonFile: string;
     imageFiles: string[];
   }>;
+  legacySpineEffects?: Array<{
+    spineId: string;
+    jsonFile: string;
+    atlasFile: string;
+    imageFiles: string[];
+  }>;
   audio: Array<{
     name: string;
     originalName?: string;

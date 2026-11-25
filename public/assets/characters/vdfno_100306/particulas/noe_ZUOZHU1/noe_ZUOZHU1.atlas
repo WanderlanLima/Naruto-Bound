@@ -1,0 +1,110 @@
+
+efeito_ZUOZHU1.webp
+size: 320,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+f1
+  rotate: false
+  xy: 1, 1
+  size: 271, 70
+  orig: 273, 72
+  offset: 1, 1
+  index: -1
+f14
+  rotate: false
+  xy: 127, 145
+  size: 117, 18
+  orig: 119, 21
+  offset: 1, 1
+  index: -1
+f14~n0967d958dc
+  rotate: false
+  xy: 127, 165
+  size: 117, 18
+  orig: 119, 21
+  offset: 1, 1
+  index: -1
+f19
+  rotate: false
+  xy: 1, 243
+  size: 39, 7
+  orig: 41, 10
+  offset: 1, 2
+  index: -1
+f19~n0967d958dc
+  rotate: false
+  xy: 42, 243
+  size: 39, 7
+  orig: 41, 10
+  offset: 1, 2
+  index: -1
+f1~n0967d958dc
+  rotate: false
+  xy: 1, 73
+  size: 271, 70
+  orig: 273, 72
+  offset: 1, 1
+  index: -1
+f9
+  rotate: false
+  xy: 1, 145
+  size: 124, 47
+  orig: 128, 49
+  offset: 2, 1
+  index: -1
+f9~n0967d958dc
+  rotate: false
+  xy: 1, 194
+  size: 124, 47
+  orig: 128, 49
+  offset: 2, 1
+  index: -1
+
+efeito_ZUOZHU1_2.webp
+size: 512,384
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+f12
+  rotate: false
+  xy: 1, 1
+  size: 226, 113
+  orig: 230, 150
+  offset: 2, 1
+  index: -1
+f17
+  rotate: false
+  xy: 1, 251
+  size: 219, 110
+  orig: 230, 150
+  offset: 7, 0
+  index: -1
+f22
+  rotate: false
+  xy: 222, 251
+  size: 191, 101
+  orig: 230, 150
+  offset: 8, 6
+  index: -1
+f25
+  rotate: false
+  xy: 224, 146
+  size: 175, 99
+  orig: 230, 150
+  offset: 15, 7
+  index: -1
+f4
+  rotate: false
+  xy: 1, 116
+  size: 221, 133
+  orig: 230, 150
+  offset: 2, 14
+  index: -1
+f7
+  rotate: false
+  xy: 229, 1
+  size: 225, 143
+  orig: 230, 150
+  offset: 5, 0
+  index: -1

@@ -320,12 +320,13 @@ let probeCtx: CanvasRenderingContext2D | null = null;
  */
 export function calibrateLegacyPivotFromImage(
   anim: CompiledAnimation,
-  idleRefVisibleH?: number
+  _idleRefVisibleH?: number
 ): { visibleHeight: number; visibleWidth: number } {
   const fallback = { visibleHeight: anim.cellHeight * 0.88, visibleWidth: anim.cellWidth * 0.6 };
-  const img = anim.pages?.[0];
+  const pages = anim.pages;
   const f0 = anim.frames[0];
-  if (!img || !f0 || img.naturalWidth === 0) return fallback;
+  const img0 = pages?.[f0?.pageIndex ?? 0];
+  if (!img0 || !f0 || img0.naturalWidth === 0) return fallback;
 
   try {
     if (!probeCanvas) {
@@ -334,71 +335,93 @@ export function calibrateLegacyPivotFromImage(
     }
     if (!probeCtx) return fallback;
 
-    const w = Math.min(512, Math.max(1, f0.w));
-    const h = Math.min(512, Math.max(1, f0.h));
-    const scaleX = w / Math.max(1, f0.w);
-    const scaleY = h / Math.max(1, f0.h);
-    probeCanvas.width = w;
-    probeCanvas.height = h;
-    probeCtx.clearRect(0, 0, w, h);
-    probeCtx.drawImage(img, f0.x, f0.y, f0.w, f0.h, 0, 0, w, h);
+    const scanFrame = (frame: SpriteFrameRect) => {
+      const pageImg = pages?.[frame.pageIndex];
+      if (!pageImg || pageImg.naturalWidth === 0) return null;
+      const w = Math.min(512, Math.max(1, frame.w));
+      const h = Math.min(512, Math.max(1, frame.h));
+      const scaleX = w / Math.max(1, frame.w);
+      const scaleY = h / Math.max(1, frame.h);
+      probeCanvas!.width = w;
+      probeCanvas!.height = h;
+      probeCtx!.clearRect(0, 0, w, h);
+      probeCtx!.drawImage(pageImg, frame.x, frame.y, frame.w, frame.h, 0, 0, w, h);
 
-    const data = probeCtx.getImageData(0, 0, w, h).data;
-    let minX = w;
-    let maxX = 0;
-    let minY = h;
-    let maxY = 0;
+      const data = probeCtx!.getImageData(0, 0, w, h).data;
+      let minX = w;
+      let maxX = 0;
+      let minY = h;
+      let maxY = 0;
 
-    for (let y = 0; y < h; y++) {
-      const rowOff = y * w * 4;
-      for (let x = 0; x < w; x++) {
-        if (data[rowOff + x * 4 + 3] > 28) {
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
+      for (let y = 0; y < h; y++) {
+        const rowOff = y * w * 4;
+        for (let x = 0; x < w; x++) {
+          if (data[rowOff + x * 4 + 3] > 28) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxY <= minY || maxX <= minX) return null;
+
+      const footTop = Math.max(minY, Math.floor(maxY - (maxY - minY) * 0.14));
+      let footSumX = 0;
+      let footCount = 0;
+      for (let y = footTop; y <= maxY; y++) {
+        const rowOff = y * w * 4;
+        for (let x = minX; x <= maxX; x++) {
+          if (data[rowOff + x * 4 + 3] > 28) {
+            footSumX += x;
+            footCount++;
+          }
+        }
+      }
+      const footCenterX = footCount > 0 ? footSumX / footCount : (minX + maxX) / 2;
+      return {
+        footCenterX: footCenterX / scaleX,
+        minY: minY / scaleY,
+        maxY: (maxY + 1) / scaleY,
+        visH: (maxY - minY + 1) / scaleY,
+        visW: (maxX - minX + 1) / scaleX,
+      };
+    };
+
+    const m0 = scanFrame(f0);
+    if (!m0) return fallback;
+
+    let pivotPxY = m0.maxY;
+    // For fall/die animations, frame 0 can be mid-air; use grounded mid/end frames for floor Y
+    if (/^(fall|die|dead|down)/i.test(anim.slug) && anim.frames.length > 1) {
+      const sampleIndices = [
+        Math.floor(anim.frames.length * 0.55),
+        anim.frames.length - 1,
+      ];
+      for (const idx of sampleIndices) {
+        const fr = anim.frames[idx];
+        if (!fr || idx === 0) continue;
+        const mExtra = scanFrame(fr);
+        if (mExtra && mExtra.maxY > pivotPxY) {
+          pivotPxY = mExtra.maxY;
         }
       }
     }
-
-    if (maxY <= minY || maxX <= minX) return fallback;
-
-    // Find feet center X specifically along the bottom 12% of the opaque silhouette
-    const footTop = Math.max(minY, Math.floor(maxY - (maxY - minY) * 0.14));
-    let footSumX = 0;
-    let footCount = 0;
-    for (let y = footTop; y <= maxY; y++) {
-      const rowOff = y * w * 4;
-      for (let x = minX; x <= maxX; x++) {
-        if (data[rowOff + x * 4 + 3] > 28) {
-          footSumX += x;
-          footCount++;
-        }
-      }
-    }
-
-    const footCenterX = footCount > 0 ? footSumX / footCount : (minX + maxX) / 2;
-    const visH = (maxY - minY + 1) / scaleY;
-    const visW = (maxX - minX + 1) / scaleX;
 
     if (!anim.hasExplicitAnchor) {
-      const pivotPxX = footCenterX / scaleX;
-      const pivotPxY = (maxY + 1) / scaleY;
+      const pivotPxX = m0.footCenterX;
       anim.anchor = {
         anchorX: pivotPxX / anim.cellWidth,
         anchorY: pivotPxY / anim.cellHeight,
         anchorYBottom: 1 - pivotPxY / anim.cellHeight,
         pivotPxX,
         pivotPxY,
-        worldToPixelScale:
-          idleRefVisibleH && idleRefVisibleH > 0 && anim.slug === 'run'
-            ? Math.max(0.65, Math.min(1.45, visH / idleRefVisibleH))
-            : anim.anchor.worldToPixelScale || 1,
+        worldToPixelScale: anim.anchor.worldToPixelScale || 1,
         computedFromOpaque: true,
       };
     }
 
-    return { visibleHeight: visH, visibleWidth: visW };
+    return { visibleHeight: m0.visH, visibleWidth: m0.visW };
   } catch {
     return fallback;
   }

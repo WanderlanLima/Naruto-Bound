@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import {
   buildDynamicCombatKit,
-  inferRolesFromAnimList,
+  normalizeCharacterRoles,
   toGameSlug,
 } from '../engine/combatParser';
 import { loadImageElement, parseSpritesheetJson } from '../engine/spriteAnimator';
@@ -304,27 +304,7 @@ async function importPhaserCharacterFromTree(
 
   // Ensure roles has all expected fields normalized
   const animSlugs = manifest.animations.map((a) => a.slug);
-  const inferredRoles = inferRolesFromAnimList(animSlugs);
-  const roles: GameCharacterRoles = {
-    idle: manifest.roles?.idle || inferredRoles.idle,
-    move: manifest.roles?.move || inferredRoles.move,
-    jump: manifest.roles?.jump || inferredRoles.jump,
-    fall: manifest.roles?.fall || inferredRoles.fall,
-    attack: manifest.roles?.attack || inferredRoles.attack,
-    skills:
-      Array.isArray(manifest.roles?.skills) && manifest.roles.skills.length > 0
-        ? manifest.roles.skills
-        : inferredRoles.skills,
-    ultimate: manifest.roles?.ultimate || inferredRoles.ultimate,
-    chase:
-      manifest.roles?.chase ||
-      (manifest.roles?.skills || []).find((s) => /chase|zhuida/i.test(s)) ||
-      inferredRoles.chase,
-    hurt: manifest.roles?.hurt || inferredRoles.hurt,
-    fly: manifest.roles?.fly || inferredRoles.fly,
-    die: manifest.roles?.die || inferredRoles.die,
-    win: manifest.roles?.win || inferredRoles.win,
-  };
+  const roles: GameCharacterRoles = normalizeCharacterRoles(manifest.roles, animSlugs);
 
   // Sanity check for split-zip missing texture pages
   for (const a of manifest.animations) {
@@ -357,7 +337,7 @@ async function importPhaserCharacterFromTree(
   };
 
   // Validate combat parsing so we fail early on truly broken files
-  buildDynamicCombatKit(combatJson, roles, record.name);
+  buildDynamicCombatKit(combatJson, roles, record.name, { availableAnims: animSlugs });
 
   await saveImportedNinja(record, blobsToSave);
 
@@ -525,7 +505,7 @@ async function importLegacyCompleteFromTree(
     throw new Error('Nenhuma animação válida encontrada em animacoes/ no pacote legado.');
   }
 
-  const roles = inferRolesFromAnimList(animNames);
+  const roles = normalizeCharacterRoles(null, animNames);
   const idleFolder = roles.idle || animNames[0];
   const idleInfo = animFolders.get(idleFolder);
 
@@ -639,7 +619,7 @@ async function importLegacyCompleteFromTree(
     importedAt: Date.now(),
   };
 
-  buildDynamicCombatKit(combatJson, roles, record.name);
+  buildDynamicCombatKit(combatJson, roles, record.name, { availableAnims: animNames });
   await saveImportedNinja(record, blobsToSave);
 
   return {

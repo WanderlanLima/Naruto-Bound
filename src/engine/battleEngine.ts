@@ -218,9 +218,10 @@ export class ShinobiBattleEngine {
   private comboBannerTimer = 0;
   private comboBannerKey = 0;
 
-  private cam = { x: 400, y: 400, z: 1.2 };
+  private cam = { x: 400, y: 400, z: 1.0 };
   private camFree = false;
   private moveDir: -1 | 0 | 1 = 0;
+  private rotatedPortrait = false;
 
   // Pointer gesture tracking
   private pointers = new Map<number, [number, number]>();
@@ -265,8 +266,8 @@ export class ShinobiBattleEngine {
 
     this.cam = {
       x: this.fighters[0].x + 80,
-      y: this.fighters[0].y - 80,
-      z: 1.2,
+      y: this.fighters[0].y - 95,
+      z: this.getDefaultZoom(),
     };
 
     this.bindInputEvents();
@@ -467,6 +468,18 @@ export class ShinobiBattleEngine {
 
   public centerCameraOnActive(): void {
     this.camFree = false;
+    this.cam.z = this.getDefaultZoom();
+  }
+
+  public setRotatedPortrait(rotated: boolean): void {
+    this.rotatedPortrait = rotated;
+  }
+
+  private getDefaultZoom(): number {
+    const W = Math.max(1, this.canvas.clientWidth);
+    const H = Math.max(1, this.canvas.clientHeight);
+    const minZ = Math.max(W / WORLD_W, H / WORLD_H);
+    return Math.min(1.12, Math.max(minZ, H / 410));
   }
 
   public dispose(): void {
@@ -498,6 +511,7 @@ export class ShinobiBattleEngine {
       lockSec?: number;
       preferredSlug?: string;
       actionEventOverride?: 'attack' | 'skill' | 'ultimate' | 'chase' | 'hurt';
+      suppressTimelineEvents?: boolean;
       strike?: Omit<
         TimelineStrikeContext,
         'hitTimestampsMs' | 'firedHitIndices' | 'finalImpactApplied'
@@ -519,7 +533,8 @@ export class ShinobiBattleEngine {
     f.lockSec = options?.lockSec !== undefined ? options.lockSec : f.animLoop ? 0 : animDurSec;
 
     // Combine animation's own eventsMs + actionEvents fallback (for built-in ninjas)
-    const baseEv = anim?.eventsMs || { hits: [], particles: [], sounds: [], videos: [] };
+    const emptyEv: AnimationEventsTimelineMs = { hits: [], particles: [], sounds: [], videos: [] };
+    const baseEv = anim?.eventsMs || emptyEv;
     const overrideEv =
       options?.actionEventOverride && f.runtime.actionEvents?.[options.actionEventOverride];
     const hasBaseEv =
@@ -527,26 +542,31 @@ export class ShinobiBattleEngine {
       baseEv.particles.length > 0 ||
       baseEv.sounds.length > 0 ||
       baseEv.videos.length > 0;
-    const events: AnimationEventsTimelineMs = hasBaseEv
-      ? baseEv
-      : overrideEv || { hits: [], particles: [], sounds: [], videos: [] };
+    const events: AnimationEventsTimelineMs = options?.suppressTimelineEvents
+      ? emptyEv
+      : hasBaseEv
+        ? baseEv
+        : overrideEv || emptyEv;
 
     let strikeCtx: TimelineStrikeContext | undefined;
     if (options?.strike) {
       // Determine real impact timestamps from eventsMs.hits, or smart fallback
       let hitTimestampsMs = events.hits.map((h) => h.timeMs);
       if (hitTimestampsMs.length === 0) {
-        // Check if particle events mark the impact moment, or use ~38% of duration
-        if (events.particles.length > 0 && options.strike.actionKind !== 'attack') {
-          hitTimestampsMs = events.particles.map((p) => p.timeMs);
+        const maxParticleMs =
+          events.particles.length > 0
+            ? Math.max(...events.particles.map((p) => p.timeMs))
+            : 0;
+        if (events.particles.length > 0 && maxParticleMs >= 80) {
+          hitTimestampsMs = events.particles.map((p) => Math.max(80, p.timeMs));
         } else {
           const fallbackMs = Math.round(
-            Math.min(620, Math.max(160, (anim?.durationMs || 700) * 0.38))
+            Math.min(620, Math.max(150, (anim?.durationMs || 700) * 0.42))
           );
           hitTimestampsMs = [fallbackMs];
         }
       }
-      // Deduplicate timestamps within 35ms so simultaneous behind+front hit layers count as one hit beat
+      // Deduplicate timestamps within 40ms so simultaneous behind+front hit layers count as one hit beat
       const grouped: number[] = [];
       for (const ms of [...hitTimestampsMs].sort((a, b) => a - b)) {
         if (grouped.length === 0 || ms - grouped[grouped.length - 1] > 40) {
@@ -572,6 +592,48 @@ export class ShinobiBattleEngine {
     // Immediately process timeMs === 0 events on frame 0
     this.tickFighterTimeline(f);
     return anim;
+  }
+
+  private getEffectDurationMs(
+    runtime: LoadedNinjaRuntime,
+    spineId: string,
+    effectAnim: string
+  ): number {
+    const sheet = this.lookupEffectSheet(runtime, spineId, effectAnim);
+    if (sheet) return Math.max(200, sheet.durationMs);
+    const sp =
+      runtime.legacySpineEffects.get(spineId) ||
+      runtime.legacySpineEffects.get(spineId.toLowerCase()) ||
+      runtime.legacySpineEffects.get(toGameSlug(spineId, 'effect'));
+    const sec = sp?.dur?.[effectAnim];
+    return sec ? Math.max(200, Math.round(sec * 1000)) : 520;
+  }
+
+  private computeStrikeDurationSec(
+    att: FighterEntity,
+    anim: CompiledAnimation | undefined
+  ): number {
+    let maxMs = Math.max(450, anim?.durationMs || 650);
+    const ev = att.timeline?.events;
+    if (ev) {
+      for (const p of ev.particles) {
+        const effDur = this.getEffectDurationMs(att.runtime, p.spineId, p.effectAnim);
+        maxMs = Math.max(maxMs, p.timeMs + Math.min(1200, effDur));
+      }
+      for (const h of ev.hits) {
+        const effDur = this.getEffectDurationMs(att.runtime, h.spineId, h.effectAnim);
+        maxMs = Math.max(maxMs, h.timeMs + Math.min(900, effDur));
+      }
+      for (const s of ev.sounds) {
+        maxMs = Math.max(maxMs, Math.min(2200, s.timeMs + 140));
+      }
+      if (att.timeline?.strike) {
+        for (const tMs of att.timeline.strike.hitTimestampsMs) {
+          maxMs = Math.max(maxMs, tMs + 220);
+        }
+      }
+    }
+    return Math.max(0.5, Math.min(2.6, maxMs / 1000));
   }
 
   private lookupEffectSheet(
@@ -665,19 +727,17 @@ export class ShinobiBattleEngine {
     if (!tl) return;
     const elapsedMs = Math.max(0, this.nowMs - f.animStartMs);
 
-    // 1. Trigger self/screen particle effects at exact timeMs
+    // 1. Trigger self/screen particle effects at exact timeMs anchored on the attacker
     tl.events.particles.forEach((pEv, idx) => {
       if (tl.firedParticles.has(idx) || elapsedMs < pEv.timeMs) return;
       tl.firedParticles.add(idx);
       const targetIdx = tl.strike?.targetIdx;
-      const isTargetAnchored =
-        tl.strike && (tl.strike.actionKind === 'ultimate' || tl.strike.actionKind === 'chase');
       this.spawnStudioEffect({
         owner: f,
         spineId: pEv.spineId,
         effectAnim: pEv.effectAnim,
         layer: pEv.layer || 'front',
-        anchorMode: isTargetAnchored && targetIdx !== undefined ? 'target' : 'attacker',
+        anchorMode: 'attacker',
         targetFighter: targetIdx !== undefined ? this.fighters[targetIdx] : undefined,
       });
     });
@@ -763,9 +823,24 @@ export class ShinobiBattleEngine {
       st.actionKind === 'ultimate' ? Math.max(3, Math.round(18 / totalBeats)) : 1;
     this.addHits(hitIncrement);
 
-    // Impact sparks & screen shake
-    this.spawnImpactSparks(hitX, hitY, st.isBig && isFinalBeat, att.runtime.entry.combat.nature);
-    this.shake = Math.max(this.shake, st.isBig && isFinalBeat ? 0.52 : 0.24);
+    // Impact sparks, shockwave ring & screen shake directly on target
+    const nat = att.runtime.entry.combat.nature;
+    this.spawnImpactSparks(hitX, hitY, st.isBig && isFinalBeat, nat);
+    this.particles.push({
+      kind: 'ring',
+      x: tg.x,
+      y: hitY,
+      vx: 0,
+      vy: 0,
+      g: 0,
+      life: 0.24,
+      maxLife: 0.24,
+      r: 6,
+      growR: isFinalBeat ? 155 : 105,
+      lineW: isFinalBeat ? 3.5 : 2.2,
+      color: NATURE_COLORS[nat] || '#FDE047',
+    });
+    this.shake = Math.max(this.shake, st.isBig && isFinalBeat ? 0.52 : 0.26);
     audioEngine.playSynth(st.isBig && isFinalBeat ? 'bigHit' : 'hit');
 
     if (!isFinalBeat) {
@@ -773,15 +848,28 @@ export class ShinobiBattleEngine {
       if (!tg.air && tg.hp > 0) {
         this.playFighterRole(tg, 'hurt', {
           loop: false,
-          lockSec: 0.32,
+          lockSec: 0.34,
           actionEventOverride: 'hurt',
         });
       }
       return;
     }
 
-    // Final hit beat: apply launch state, status effects, combo callout!
+    // Final hit beat: carve terrain crater under target & detonate impact burst right on target!
     st.finalImpactApplied = true;
+    const craterR =
+      st.actionKind === 'ultimate'
+        ? 82
+        : st.actionKind === 'skill'
+          ? 62
+          : st.actionKind === 'chase'
+            ? 32
+            : 48;
+    this.carveCrater(tg.x, tg.y, craterR);
+    this.spawnTerrainBurst(tg.x, tg.y, true, nat);
+    if (!att.timeline?.events.hits.length) {
+      this.spawnBeams(tg.x, hitY, att.dir);
+    }
     this.applyHitState(tg, st.causesState, att);
 
     const appliedStatusLabels: string[] = [];
@@ -1016,13 +1104,7 @@ export class ShinobiBattleEngine {
   }
 
   private getLaunchOrigin(f: FighterEntity): { x: number; y: number } {
-    const role: AnimRoleKey =
-      f.armedAction === 'ultimate'
-        ? 'ultimate'
-        : f.armedAction === 'skill'
-          ? 'skill'
-          : 'attack';
-    const slug = resolveRoleAnimationSlug(f.runtime.roles, new Set(f.runtime.animations.keys()), role);
+    const slug = resolveRoleAnimationSlug(f.runtime.roles, new Set(f.runtime.animations.keys()), 'attack');
     const anim = this.getFighterAnim(f, slug);
     // Sample emitter point around the release window (~35% into attack animation)
     const sampleMs = anim ? Math.round(anim.durationMs * 0.35) : 0;
@@ -1045,10 +1127,11 @@ export class ShinobiBattleEngine {
     const speed = 260 + 760 * power;
     f.dir = Math.cos(angle) >= 0 ? 1 : -1;
 
-    const launchRole: AnimRoleKey = f.armedAction === 'skill' ? 'skill' : 'attack';
-    const anim = this.playFighterRole(f, launchRole, {
+    // Play a clean launch/throw animation WITHOUT firing melee skill particles at the distant firing pad
+    const anim = this.playFighterRole(f, 'attack', {
       loop: false,
-      actionEventOverride: launchRole,
+      lockSec: 0.28,
+      suppressTimelineEvents: true,
     });
     const origin = sampleEmitterWorldPosition({
       anim,
@@ -1085,35 +1168,35 @@ export class ShinobiBattleEngine {
     const isSkill = Boolean(
       hitFighter && !isUlt && actionChoice === 'skill' && att.chakra >= att.runtime.entry.combat.skill.chakraCost
     );
-    const craterR = isUlt ? 96 : isSkill ? 76 : hitFighter ? 64 : 34;
-
-    this.carveCrater(x, y, craterR);
-    this.spawnTerrainBurst(x, y, Boolean(hitFighter), att.runtime.entry.combat.nature);
-    this.shake = Math.max(this.shake, hitFighter ? 0.25 : 0.14);
+    const nature = att.runtime.entry.combat.nature;
     this.projectile = null;
 
-    // Splash damage if explosion grazes a non-direct-hit fighter
-    for (const f of this.fighters) {
-      if (f === hitFighter || f.hp <= 0) continue;
-      const dist = Math.hypot(x - f.x, y - (f.y - f.runtime.bodyHeight * 0.5));
-      if (dist < craterR + 34) {
-        const splashDmg = Math.round(att.runtime.entry.combat.baseDmg * 0.38);
-        f.hp = Math.max(0, f.hp - splashDmg);
-        f.hitFlash = 0.15;
-        this.dmgNumbers.push({
-          x: f.x,
-          y: f.y - f.runtime.bodyHeight - 8,
-          value: `${splashDmg}`,
-          life: 1.2,
-          big: false,
-          crit: false,
-          color: '#FCA5A5',
-        });
-        this.playFighterRole(f, 'hurt', { loop: false, lockSec: 0.45, actionEventOverride: 'hurt' });
-      }
-    }
-
     if (!hitFighter) {
+      const craterR = 34;
+      this.carveCrater(x, y, craterR);
+      this.spawnTerrainBurst(x, y, false, nature);
+      this.shake = Math.max(this.shake, 0.14);
+
+      for (const f of this.fighters) {
+        if (f.hp <= 0) continue;
+        const dist = Math.hypot(x - f.x, y - (f.y - f.runtime.bodyHeight * 0.5));
+        if (dist < craterR + 34) {
+          const splashDmg = Math.round(att.runtime.entry.combat.baseDmg * 0.38);
+          f.hp = Math.max(0, f.hp - splashDmg);
+          f.hitFlash = 0.15;
+          this.dmgNumbers.push({
+            x: f.x,
+            y: f.y - f.runtime.bodyHeight - 8,
+            value: `${splashDmg}`,
+            life: 1.2,
+            big: false,
+            crit: false,
+            color: '#FCA5A5',
+          });
+          this.playFighterRole(f, 'hurt', { loop: false, lockSec: 0.45, actionEventOverride: 'hurt' });
+        }
+      }
+
       if (att.statuses.seal === 0) {
         att.chakra = Math.min(100, att.chakra + 12);
       }
@@ -1124,6 +1207,12 @@ export class ShinobiBattleEngine {
       return;
     }
 
+    // Direct hit: defer terrain crater carving to final impact beat so target doesn't sink before the combo!
+    hitFighter.hitFlash = 0.16;
+    hitFighter.vx = 0;
+    this.spawnImpactSparks(x, y, false, nature);
+    this.shake = Math.max(this.shake, 0.18);
+    audioEngine.playSynth('hit');
     this.pushCallout(isUlt ? 'ÔGI ATIVADO!' : 'ACERTOU!', x, y - 20, '#FDE047');
     this.phase = 'after';
     this.afterTimer = 1.3;
@@ -1136,7 +1225,7 @@ export class ShinobiBattleEngine {
       phase: 'approach',
       t: 0,
       x0: att.x,
-      x1: hitFighter.x + (hitFighter.x > att.x ? -48 : 48),
+      x1: hitFighter.x + (hitFighter.x > att.x ? -62 : 62),
       dashDur: Math.min(0.55, 0.18 + Math.abs(hitFighter.x - att.x) / 3400),
       waitDur: 0,
       strikeElapsed: 0,
@@ -1233,7 +1322,8 @@ export class ShinobiBattleEngine {
       });
       D.lastCausedState = ch.causesState;
       D.strikeElapsed = 0;
-      D.strikeDur = Math.max(0.45, (anim?.durationMs || 700) / 1000);
+      D.strikeDur = this.computeStrikeDurationSec(att, anim);
+      att.lockSec = D.strikeDur;
       return;
     }
 
@@ -1283,7 +1373,8 @@ export class ShinobiBattleEngine {
 
     D.lastCausedState = spec.causesState;
     D.strikeElapsed = 0;
-    D.strikeDur = Math.max(0.45, (anim?.durationMs || 750) / 1000);
+    D.strikeDur = this.computeStrikeDurationSec(att, anim);
+    att.lockSec = D.strikeDur;
     this.emitUi(true);
   }
 
@@ -1322,12 +1413,19 @@ export class ShinobiBattleEngine {
       att.x = lerp(D.x0, D.x1, D.t / Math.max(0.05, D.dashDur));
       att.y = this.findGroundY(att.x);
       att.dir = D.x1 >= D.x0 ? 1 : -1;
-      if (att.animSlug !== att.runtime.roles.move) {
+      const moveSlug = resolveRoleAnimationSlug(
+        att.runtime.roles,
+        new Set(att.runtime.animations.keys()),
+        'move'
+      );
+      if (att.animSlug !== moveSlug) {
         this.playFighterRole(att, 'move', { loop: true, lockSec: 0 });
       }
       if (D.t >= D.dashDur) {
         att.x = D.x1;
         att.y = this.findGroundY(att.x);
+        att.air = false;
+        att.vy = 0;
         D.phase = 'strike';
         D.t = 0;
         this.beginMeleeStrike(D, false);
@@ -1363,7 +1461,7 @@ export class ShinobiBattleEngine {
         D.phase = 'chaseDash';
         D.t = 0;
         D.xChaseStart = att.x;
-        D.xChaseEnd = tg.x + (tg.x >= att.x ? -46 : 46);
+        D.xChaseEnd = tg.x + (tg.x >= att.x ? -60 : 60);
         audioEngine.playSynth('chase');
         this.pushCallout('PERSEGUIÇÃO!', tg.x, tg.y - tg.runtime.bodyHeight - 24, '#7DD3FC');
       } else if (waitingForFall && D.waitDur < 2.6) {
@@ -1377,12 +1475,19 @@ export class ShinobiBattleEngine {
       att.x = lerp(D.xChaseStart, D.xChaseEnd, D.t / 0.16);
       att.y = this.findGroundY(att.x);
       att.dir = D.xChaseEnd >= D.xChaseStart ? 1 : -1;
-      if (att.animSlug !== att.runtime.roles.move) {
+      const moveSlug = resolveRoleAnimationSlug(
+        att.runtime.roles,
+        new Set(att.runtime.animations.keys()),
+        'move'
+      );
+      if (att.animSlug !== moveSlug) {
         this.playFighterRole(att, 'move', { loop: true, lockSec: 0 });
       }
       if (D.t >= 0.16) {
         att.x = D.xChaseEnd;
         att.y = this.findGroundY(att.x);
+        att.air = false;
+        att.vy = 0;
         D.phase = 'chaseStrike';
         D.t = 0;
         this.beginMeleeStrike(D, true);
@@ -1392,12 +1497,20 @@ export class ShinobiBattleEngine {
       att.x = lerp(D.xRet, D.x0, D.t / Math.max(0.05, D.dashDur));
       att.y = this.findGroundY(att.x);
       att.dir = D.x0 >= D.xRet ? 1 : -1;
-      if (att.animSlug !== att.runtime.roles.move) {
+      const moveSlug = resolveRoleAnimationSlug(
+        att.runtime.roles,
+        new Set(att.runtime.animations.keys()),
+        'move'
+      );
+      if (att.animSlug !== moveSlug) {
         this.playFighterRole(att, 'move', { loop: true, lockSec: 0 });
       }
       if (D.t >= D.dashDur) {
         att.x = D.x0;
         att.y = this.findGroundY(att.x);
+        att.air = false;
+        att.vy = 0;
+        att.lockSec = 0;
         att.dir = tg.x >= att.x ? 1 : -1;
         this.dash = null;
         if (att.hp > 0) {
@@ -1483,14 +1596,31 @@ export class ShinobiBattleEngine {
       }
 
       if (f.hp > 0 && f.lockSec > 0) {
-        f.lockSec -= dt;
-        if (f.lockSec <= 0 && !f.air && !this.dash) {
+        f.lockSec = Math.max(0, f.lockSec - dt);
+      }
+
+      const isBusyInDash = Boolean(
+        this.dash &&
+          (this.dash.attackerIdx === f.index ||
+            (this.dash.targetIdx === f.index && this.dash.phase !== 'return'))
+      );
+
+      if (f.hp > 0 && !f.air && f.lockSec <= 0 && !isBusyInDash && this.phase !== 'over') {
+        const avail = new Set(f.runtime.animations.keys());
+        const idleSlug = resolveRoleAnimationSlug(f.runtime.roles, avail, 'idle') || 'idle';
+        const moveSlug = resolveRoleAnimationSlug(f.runtime.roles, avail, 'move');
+        if (f.animSlug !== idleSlug && f.animSlug !== moveSlug) {
           this.playFighterRole(f, 'idle', { loop: true, lockSec: 0 });
           f.chaseState = null;
         }
       }
 
-      if (f.hp <= 0 && !f.air && f.animSlug !== f.runtime.roles.die) {
+      const dieSlug = resolveRoleAnimationSlug(
+        f.runtime.roles,
+        new Set(f.runtime.animations.keys()),
+        'die'
+      );
+      if (f.hp <= 0 && !f.air && f.animSlug !== dieSlug) {
         this.playFighterRole(f, 'die', { loop: false, lockSec: 0 });
       }
 
@@ -1522,6 +1652,12 @@ export class ShinobiBattleEngine {
       active.lockSec <= 0 &&
       !this.dash;
 
+    const activeMoveSlug = resolveRoleAnimationSlug(
+      active.runtime.roles,
+      new Set(active.runtime.animations.keys()),
+      'move'
+    );
+
     if (canMove) {
       const speed = active.statuses.slow > 0 ? 52 : 84;
       const nx = active.x + this.moveDir * speed * dt;
@@ -1538,11 +1674,11 @@ export class ShinobiBattleEngine {
         active.moveUsed += speed * dt;
       }
       active.dir = this.moveDir as 1 | -1;
-      if (active.animSlug !== active.runtime.roles.move && !active.air) {
+      if (active.animSlug !== activeMoveSlug && !active.air) {
         this.playFighterRole(active, 'move', { loop: true, lockSec: 0 });
       }
     } else if (
-      active.animSlug === active.runtime.roles.move &&
+      active.animSlug === activeMoveSlug &&
       !this.dash &&
       this.phase !== 'over'
     ) {
@@ -1665,18 +1801,18 @@ export class ShinobiBattleEngine {
     const H = Math.max(1, this.canvas.clientHeight);
     const minZ = Math.max(W / WORLD_W, H / WORLD_H);
 
-    let camTarget = { x: active.x, y: active.y - 80 };
+    let camTarget = { x: active.x, y: active.y - 95 };
     if (this.phase === 'fly' && this.projectile) {
       camTarget = { x: this.projectile.x, y: this.projectile.y };
     } else if (this.dash) {
       const tg = this.fighters[this.dash.targetIdx];
       camTarget = {
         x: (active.x + tg.x) / 2,
-        y: Math.min(active.y, tg.y) - 75,
+        y: Math.min(active.y, tg.y) - 85,
       };
     } else if (this.phase === 'over' && (this.winnerIndex === 0 || this.winnerIndex === 1)) {
       const w = this.fighters[this.winnerIndex];
-      camTarget = { x: w.x, y: w.y - 75 };
+      camTarget = { x: w.x, y: w.y - 85 };
     }
 
     if (!this.camFree || this.phase === 'fly' || Boolean(this.dash)) {
@@ -2176,10 +2312,17 @@ export class ShinobiBattleEngine {
 
   /* ---------- Pointer, Wheel & Keyboard Input ---------- */
 
-  private screenToWorld(clientX: number, clientY: number): [number, number] {
+  private clientToCanvasLocal(clientX: number, clientY: number): [number, number] {
     const rect = this.canvas.getBoundingClientRect();
-    const sx = clientX - rect.left;
-    const sy = clientY - rect.top;
+    if (this.rotatedPortrait) {
+      // Container rotated +90deg clockwise in portrait viewports
+      return [clientY - rect.top, rect.right - clientX];
+    }
+    return [clientX - rect.left, clientY - rect.top];
+  }
+
+  private screenToWorld(clientX: number, clientY: number): [number, number] {
+    const [sx, sy] = this.clientToCanvasLocal(clientX, clientY);
     return [
       (sx - this.canvas.clientWidth / 2) / this.cam.z + this.cam.x,
       (sy - this.canvas.clientHeight / 2) / this.cam.z + this.cam.y,
@@ -2207,7 +2350,8 @@ export class ShinobiBattleEngine {
   private handlePointerDown = (e: PointerEvent): void => {
     audioEngine.unlock();
     this.canvas.setPointerCapture(e.pointerId);
-    this.pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    const [sx, sy] = this.clientToCanvasLocal(e.clientX, e.clientY);
+    this.pointers.set(e.pointerId, [sx, sy]);
 
     if (this.pointers.size === 2) {
       this.gesture = { mode: 'zoom', dist: this.getPinchDistance(), baseZoom: this.cam.z };
@@ -2222,13 +2366,11 @@ export class ShinobiBattleEngine {
       this.fighters[this.turnIndex].lockSec <= 0
     ) {
       const active = this.fighters[this.turnIndex];
-      const rect = this.canvas.getBoundingClientRect();
-      const sx = (active.x - this.cam.x) * this.cam.z + this.canvas.clientWidth / 2 + rect.left;
-      const sy =
+      const activeSx = (active.x - this.cam.x) * this.cam.z + this.canvas.clientWidth / 2;
+      const activeSy =
         (active.y - active.runtime.bodyHeight * 0.5 - this.cam.y) * this.cam.z +
-        this.canvas.clientHeight / 2 +
-        rect.top;
-      if (Math.hypot(e.clientX - sx, e.clientY - sy) < 115) {
+        this.canvas.clientHeight / 2;
+      if (Math.hypot(sx - activeSx, sy - activeSy) < 115) {
         this.gesture = { mode: 'aim' };
         this.updateAimFromPointer(e.clientX, e.clientY);
         return;
@@ -2242,16 +2384,16 @@ export class ShinobiBattleEngine {
   private handlePointerMove = (e: PointerEvent): void => {
     const prev = this.pointers.get(e.pointerId);
     if (!prev || !this.gesture) return;
-    const next: [number, number] = [e.clientX, e.clientY];
+    const next = this.clientToCanvasLocal(e.clientX, e.clientY);
     this.pointers.set(e.pointerId, next);
 
     if (this.gesture.mode === 'zoom' && this.pointers.size === 2) {
-      this.cam.z = (this.gesture.baseZoom || 1.2) * (this.getPinchDistance() / (this.gesture.dist || 1));
+      this.cam.z = (this.gesture.baseZoom || 1.1) * (this.getPinchDistance() / (this.gesture.dist || 1));
     } else if (this.gesture.mode === 'pan') {
       this.cam.x -= (next[0] - prev[0]) / this.cam.z;
       this.cam.y -= (next[1] - prev[1]) / this.cam.z;
     } else if (this.gesture.mode === 'aim') {
-      this.updateAimFromPointer(next[0], next[1]);
+      this.updateAimFromPointer(e.clientX, e.clientY);
     }
   };
 

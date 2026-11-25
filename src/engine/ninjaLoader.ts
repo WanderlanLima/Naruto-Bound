@@ -1,7 +1,7 @@
 import { audioEngine } from './audioPlayer';
 import {
   buildDynamicCombatKit,
-  inferRolesFromAnimList,
+  normalizeCharacterRoles,
   toGameSlug,
 } from './combatParser';
 import {
@@ -128,19 +128,23 @@ export async function loadRepoRoster(customBaseUrl?: string): Promise<{
   entries: NinjaRosterEntry[];
   detectedBaseUrl: string | null;
 }> {
-  const candidates: string[] = [];
+  const candidates: string[] = ['./assets/index.json', './game-assets/index.json', './index.json'];
   if (customBaseUrl && customBaseUrl.trim()) {
     const clean = customBaseUrl.trim().replace(/\/+$/, '');
     candidates.push(clean.endsWith('index.json') ? clean : `${clean}/index.json`);
   }
-  candidates.push('./assets/index.json', './game-assets/index.json', './index.json');
+
+  const byId = new Map<string, NinjaRosterEntry>();
+  let detectedBaseUrl: string | null = null;
 
   for (const idxUrl of candidates) {
     const idx = await fetchJsonSafe<GameRootIndex>(idxUrl);
     if (!idx || !Array.isArray(idx.characters) || idx.characters.length === 0) continue;
 
     const baseRoot = idxUrl.replace(/\/index\.json$/i, '');
-    const entries: NinjaRosterEntry[] = [];
+    if (!detectedBaseUrl || baseRoot !== './assets') {
+      detectedBaseUrl = baseRoot;
+    }
 
     for (const item of idx.characters) {
       const charJsonUrl = joinUrl(baseRoot, item.characterJson || `${item.path}/character.json`);
@@ -152,8 +156,14 @@ export async function loadRepoRoster(customBaseUrl?: string): Promise<{
         joinUrl(charBase, 'combate_e_habilidades.json')
       );
 
-      const roles = manifest.roles || inferRolesFromAnimList(manifest.animations.map((a) => a.slug));
-      const combat = buildDynamicCombatKit(combatJson, roles, combatJson?.displayName || manifest.name);
+      const animSlugs = manifest.animations.map((a) => a.slug);
+      const roles = normalizeCharacterRoles(manifest.roles, animSlugs);
+      const combat = buildDynamicCombatKit(
+        combatJson,
+        roles,
+        combatJson?.displayName || manifest.name,
+        { availableAnims: animSlugs }
+      );
 
       const idleSlug = roles.idle || manifest.animations[0]?.slug || 'idle';
       const idleAnim = manifest.animations.find((a) => a.slug === idleSlug) || manifest.animations[0];
@@ -185,7 +195,7 @@ export async function loadRepoRoster(customBaseUrl?: string): Promise<{
       const artRel = findRel(/^(artes\/.*01_arte_completa|artes\/.*02_meio_corpo|art).*\.(png|webp|jpg|jpeg)$/);
       const icoRel = findRel(/^(icones_skills\/.*(03_|unique|esoter|ogi)|ico).*\.(png|webp|jpg|jpeg)$/);
 
-      entries.push({
+      byId.set(manifest.id, {
         id: manifest.id,
         name: combatJson?.displayName || manifest.name,
         source: 'repo',
@@ -199,16 +209,12 @@ export async function loadRepoRoster(customBaseUrl?: string): Promise<{
         previewIdleMeta: idleMeta,
         baseUrl: charBase,
         manifestUrl: charJsonUrl,
-        formatLabel: 'Repositório',
+        formatLabel: baseRoot === './assets' ? 'Completo' : 'Repositório',
       });
-    }
-
-    if (entries.length > 0) {
-      return { entries, detectedBaseUrl: baseRoot };
     }
   }
 
-  return { entries: [], detectedBaseUrl: null };
+  return { entries: Array.from(byId.values()), detectedBaseUrl };
 }
 
 /**
@@ -220,7 +226,11 @@ export async function loadImportedRoster(previewUrlPool: ObjectUrlPool): Promise
   const entries: NinjaRosterEntry[] = [];
 
   for (const rec of records) {
-    const combat = buildDynamicCombatKit(rec.combatJson, rec.roles, rec.name);
+    const animSlugs = rec.manifest?.animations.map((a) => a.slug) || [];
+    const roles = animSlugs.length > 0 ? normalizeCharacterRoles(rec.roles, animSlugs) : rec.roles;
+    const combat = buildDynamicCombatKit(rec.combatJson, roles, rec.name, {
+      availableAnims: animSlugs.length > 0 ? animSlugs : undefined,
+    });
 
     const blobToUrl = async (key?: string): Promise<string | undefined> => {
       if (!key) return undefined;
@@ -270,7 +280,7 @@ export async function loadImportedRoster(previewUrlPool: ObjectUrlPool): Promise
       source: rec.source,
       facing: rec.facing,
       combat,
-      roles: rec.roles,
+      roles,
       previewFaceUrl: faceUrl,
       previewArtUrl: artUrl,
       previewIcoUrl: icoUrl,
@@ -559,6 +569,43 @@ async function loadRepoRuntime(
     })
   );
 
+  // 2b. Load raw Spine particulas packs when present in character.json
+  await Promise.all(
+    (manifest.legacySpineEffects || []).map(async (spDef) => {
+      try {
+        const [spineJson, atlasRes] = await Promise.all([
+          fetchJsonSafe<any>(joinUrl(charBase, spDef.jsonFile)),
+          fetch(joinUrl(charBase, spDef.atlasFile)),
+        ]);
+        if (!spineJson || !atlasRes.ok) return;
+        const parsed = parseRawSpineAtlasAndJson(spineJson, await atlasRes.text());
+        if (!parsed) return;
+
+        const imgByName = new Map<string, string>();
+        for (const imgRel of spDef.imageFiles || []) {
+          imgByName.set(imgRel.replace(/^.*\//, '').toLowerCase(), imgRel);
+        }
+        const pages: HTMLImageElement[] = [];
+        for (const pageName of parsed.pageNames) {
+          const matchedRel = imgByName.get(pageName.replace(/^.*\//, '').toLowerCase());
+          if (!matchedRel) continue;
+          try {
+            pages.push(await loadImageElement(joinUrl(charBase, matchedRel)));
+          } catch {
+            // ignore missing page
+          }
+        }
+        if (pages.length === 0) return;
+        parsed.data.pages = pages;
+        legacySpineEffects.set(spDef.spineId, parsed.data);
+        legacySpineEffects.set(spDef.spineId.toLowerCase(), parsed.data);
+        legacySpineEffects.set(toGameSlug(spDef.spineId, 'effect'), parsed.data);
+      } catch {
+        // ignore malformed spine particle pack
+      }
+    })
+  );
+
   // 3. Load MP3 audio buffers
   await Promise.all(
     (manifest.audio || []).map(async (aud) => {
@@ -585,13 +632,15 @@ async function loadRepoRuntime(
     if (!videoUrls.has('ultimate')) videoUrls.set('ultimate', url);
   }
 
-  const idleAnim = animations.get(manifest.roles.idle || 'idle') || animations.values().next().value;
+  const animSlugs = Array.from(animations.keys());
+  const normalizedRoles = normalizeCharacterRoles(manifest.roles, animSlugs);
+  const idleAnim = animations.get(normalizedRoles.idle || 'idle') || animations.values().next().value;
   const { charWorldScale, bodyHeight, bodyWidth } = computeCharacterScaleFromIdle(idleAnim);
 
   return {
     entry,
     facing: manifest.facing === 'left' ? 'left' : 'right',
-    roles: manifest.roles,
+    roles: normalizedRoles,
     animations,
     effects,
     legacySpineEffects,
@@ -709,13 +758,15 @@ async function loadImportedPhaserRuntime(
     if (!videoUrls.has('ultimate')) videoUrls.set('ultimate', url);
   }
 
-  const idleAnim = animations.get(record.roles.idle || 'idle') || animations.values().next().value;
+  const animSlugs = Array.from(animations.keys());
+  const normalizedRoles = normalizeCharacterRoles(record.roles, animSlugs);
+  const idleAnim = animations.get(normalizedRoles.idle || 'idle') || animations.values().next().value;
   const { charWorldScale, bodyHeight, bodyWidth } = computeCharacterScaleFromIdle(idleAnim);
 
   return {
     entry,
     facing: record.facing,
-    roles: record.roles,
+    roles: normalizedRoles,
     animations,
     effects,
     legacySpineEffects,
@@ -835,37 +886,97 @@ async function loadImportedLegacyRuntime(
   );
 
   // Calibrate pivots for animations that lacked explicit anchor metadata
-  const idleAnim = animations.get(record.roles.idle || 'idle') || animations.values().next().value;
+  const animSlugs = Array.from(animations.keys());
+  const normalizedRoles = normalizeCharacterRoles(record.roles, animSlugs);
+  const idleSlug = normalizedRoles.idle || 'idle';
+  const idleAnim = animations.get(idleSlug) || animations.values().next().value;
   const idleVis = idleAnim ? calibrateLegacyPivotFromImage(idleAnim) : undefined;
   for (const [slug, anim] of animations.entries()) {
-    if (slug !== (record.roles.idle || 'idle')) {
+    if (slug !== idleSlug) {
       calibrateLegacyPivotFromImage(anim, idleVis?.visibleHeight);
     }
   }
   const { charWorldScale, bodyHeight, bodyWidth } = computeCharacterScaleFromIdle(idleAnim);
 
-  // Load pre-rendered spritesheet effects under particulas/<spineId>/ if present
+  // Load pre-rendered spritesheet effects OR raw Spine (.atlas + .json + .png) under particulas/<spineId>/
+  const legacySpineFolders = new Map<
+    string,
+    { jsonRel?: string; atlasRel?: string; imageRels: Map<string, string> }
+  >();
+
   for (const rel of Object.keys(record.fileBlobKeys)) {
-    const m = rel.match(/^particulas\/([^/]+)\/(.+)_spritesheet\.json$/i);
-    if (!m) continue;
-    const spineId = m[1];
-    const animName = m[2].replace(/^.*\//, '');
-    const pngRel = rel.replace(/_spritesheet\.json$/i, '_spritesheet.png');
-    const [jBlob, pBlob] = await Promise.all([readBlobByRel(rel), readBlobByRel(pngRel)]);
-    if (!jBlob || !pBlob) continue;
+    const mSheet = rel.match(/^particulas\/([^/]+)\/(.+)_spritesheet\.json$/i);
+    if (mSheet) {
+      const spineId = mSheet[1];
+      const animName = mSheet[2].replace(/^.*\//, '');
+      const pngRel = rel.replace(/_spritesheet\.json$/i, '_spritesheet.png');
+      const [jBlob, pBlob] = await Promise.all([readBlobByRel(rel), readBlobByRel(pngRel)]);
+      if (!jBlob || !pBlob) continue;
+      try {
+        const compiled = parseSpritesheetJson(
+          JSON.parse(await jBlob.text()),
+          animName,
+          `particulas/${spineId}`,
+          [pngRel],
+          1
+        );
+        const img = await loadImageElement(matchPool.create(pBlob));
+        compiled.pages = [img];
+        registerEffectAliases(effects, spineId, animName, compiled);
+      } catch {
+        // ignore
+      }
+      continue;
+    }
+
+    const mRaw = rel.match(/^particulas\/([^/]+)\/([^/]+)$/i);
+    if (mRaw) {
+      const spineId = mRaw[1];
+      const fileName = mRaw[2];
+      const low = fileName.toLowerCase();
+      const bucket = legacySpineFolders.get(spineId) || { imageRels: new Map<string, string>() };
+      if (low.endsWith('.json') && !low.endsWith('_spritesheet.json')) {
+        bucket.jsonRel = rel;
+      } else if (low.endsWith('.atlas')) {
+        bucket.atlasRel = rel;
+      } else if (/\.(png|webp)$/i.test(low) && !low.endsWith('_spritesheet.png')) {
+        bucket.imageRels.set(low, rel);
+      }
+      legacySpineFolders.set(spineId, bucket);
+    }
+  }
+
+  for (const [spineId, bucket] of legacySpineFolders.entries()) {
+    if (!bucket.jsonRel || !bucket.atlasRel) continue;
     try {
-      const compiled = parseSpritesheetJson(
-        JSON.parse(await jBlob.text()),
-        animName,
-        `particulas/${spineId}`,
-        [pngRel],
-        1
-      );
-      const img = await loadImageElement(matchPool.create(pBlob));
-      compiled.pages = [img];
-      registerEffectAliases(effects, spineId, animName, compiled);
+      const [jBlob, aBlob] = await Promise.all([
+        readBlobByRel(bucket.jsonRel),
+        readBlobByRel(bucket.atlasRel),
+      ]);
+      if (!jBlob || !aBlob) continue;
+      const spineJson = JSON.parse(await jBlob.text());
+      const atlasText = await aBlob.text();
+      const parsed = parseRawSpineAtlasAndJson(spineJson, atlasText);
+      if (!parsed) continue;
+
+      const pages: HTMLImageElement[] = [];
+      for (const pageFile of parsed.pageNames) {
+        const matchedRel =
+          bucket.imageRels.get(pageFile.toLowerCase()) ||
+          bucket.imageRels.get(pageFile.replace(/^.*\//, '').toLowerCase());
+        if (!matchedRel) continue;
+        const imgBlob = await readBlobByRel(matchedRel);
+        if (!imgBlob) continue;
+        const img = await loadImageElement(matchPool.create(imgBlob)).catch(() => null);
+        if (img) pages.push(img);
+      }
+      if (pages.length === 0) continue;
+      parsed.data.pages = pages;
+      legacySpineEffects.set(spineId, parsed.data);
+      legacySpineEffects.set(spineId.toLowerCase(), parsed.data);
+      legacySpineEffects.set(toGameSlug(spineId, 'effect'), parsed.data);
     } catch {
-      // ignore
+      // ignore malformed spine particle pack
     }
   }
 
@@ -898,7 +1009,7 @@ async function loadImportedLegacyRuntime(
   return {
     entry,
     facing: record.facing,
-    roles: record.roles,
+    roles: normalizedRoles,
     animations,
     effects,
     legacySpineEffects,
@@ -908,5 +1019,146 @@ async function loadImportedLegacyRuntime(
     bodyHeight,
     bodyWidth,
     dispose: () => matchPool.revokeAll(),
+  };
+}
+
+function parseRawSpineAtlasAndJson(
+  spineJson: any,
+  atlasText: string
+): { data: LegacySpineData; pageNames: string[] } | null {
+  if (!spineJson || !spineJson.animations) return null;
+
+  const lines = atlasText.split(/\r?\n/);
+  const pageNames: string[] = [];
+  const rg: LegacySpineData['rg'] = {};
+  let pageIdx = -1;
+  let currentRegion: string | null = null;
+  let cur: Partial<LegacySpineData['rg'][string]> = {};
+
+  const flushRegion = () => {
+    if (currentRegion !== null && pageIdx >= 0 && cur.w && cur.h) {
+      rg[currentRegion] = {
+        p: pageIdx,
+        x: cur.x || 0,
+        y: cur.y || 0,
+        w: cur.w,
+        h: cur.h,
+        ow: cur.ow || cur.w,
+        oh: cur.oh || cur.h,
+        ox: cur.ox || 0,
+        oy: cur.oy || 0,
+        rotate: cur.rotate,
+      };
+    }
+    currentRegion = null;
+    cur = {};
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      flushRegion();
+      continue;
+    }
+    if (!raw.startsWith(' ') && !raw.startsWith('\t')) {
+      const next = (lines[i + 1] || '').trim().toLowerCase();
+      if (
+        next.startsWith('size:') ||
+        next.startsWith('format:') ||
+        next.startsWith('filter:') ||
+        /\.(png|webp)$/i.test(trimmed)
+      ) {
+        flushRegion();
+        pageIdx = pageNames.length;
+        pageNames.push(trimmed);
+      } else {
+        flushRegion();
+        currentRegion = trimmed;
+        cur = {};
+      }
+    } else if (currentRegion !== null) {
+      const colon = trimmed.indexOf(':');
+      if (colon > 0) {
+        const k = trimmed.slice(0, colon).trim().toLowerCase();
+        const v = trimmed.slice(colon + 1).trim();
+        const nums = v.split(',').map((n) => parseInt(n.trim(), 10));
+        if (k === 'rotate') {
+          cur.rotate = v === 'true' ? true : v === '90' ? 90 : false;
+        } else if (k === 'xy' && nums.length >= 2) {
+          cur.x = nums[0];
+          cur.y = nums[1];
+        } else if (k === 'size' && nums.length >= 2) {
+          cur.w = nums[0];
+          cur.h = nums[1];
+        } else if (k === 'orig' && nums.length >= 2) {
+          cur.ow = nums[0];
+          cur.oh = nums[1];
+        } else if (k === 'offset' && nums.length >= 2) {
+          cur.ox = nums[0];
+          cur.oy = nums[1];
+        }
+      }
+    }
+  }
+  flushRegion();
+
+  const bones: LegacySpineData['bones'] = Array.isArray(spineJson.bones) ? spineJson.bones : [];
+  const bi: Record<string, number> = {};
+  bones.forEach((b, idx) => {
+    if (b?.name) bi[b.name] = idx;
+  });
+
+  const sk: LegacySpineData['sk'] = {};
+  if (Array.isArray(spineJson.skins)) {
+    for (const skinObj of spineJson.skins) {
+      const atts = skinObj?.attachments || {};
+      for (const [slotName, slotAtts] of Object.entries(atts)) {
+        sk[slotName] = { ...(sk[slotName] || {}), ...(slotAtts as Record<string, any>) };
+      }
+    }
+  } else if (spineJson.skins && typeof spineJson.skins === 'object') {
+    for (const skinAtts of Object.values(spineJson.skins)) {
+      if (!skinAtts || typeof skinAtts !== 'object') continue;
+      for (const [slotName, slotAtts] of Object.entries(skinAtts as Record<string, any>)) {
+        sk[slotName] = { ...(sk[slotName] || {}), ...(slotAtts as Record<string, any>) };
+      }
+    }
+  }
+
+  const dur: Record<string, number> = {};
+  for (const [animName, animData] of Object.entries<any>(spineJson.animations || {})) {
+    let maxT = 0.45;
+    for (const btl of Object.values<any>(animData?.bones || {})) {
+      for (const arr of Object.values<any>(btl || {})) {
+        if (Array.isArray(arr) && arr.length > 0) {
+          const t = Number(arr[arr.length - 1]?.time || 0);
+          if (t > maxT) maxT = t;
+        }
+      }
+    }
+    for (const stl of Object.values<any>(animData?.slots || {})) {
+      for (const arr of Object.values<any>(stl || {})) {
+        if (Array.isArray(arr) && arr.length > 0) {
+          const t = Number(arr[arr.length - 1]?.time || 0);
+          if (t > maxT) maxT = t;
+        }
+      }
+    }
+    dur[animName] = maxT;
+  }
+
+  return {
+    pageNames,
+    data: {
+      bones,
+      bi,
+      slots: Array.isArray(spineJson.slots) ? spineJson.slots : [],
+      sk,
+      rg,
+      anims: spineJson.animations,
+      dur,
+      pageFiles: pageNames,
+    },
   };
 }

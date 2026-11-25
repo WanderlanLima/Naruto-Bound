@@ -1,0 +1,206 @@
+{
+  "schemaVersion": "shinobi-combat-v1",
+  "characterId": "vdfno_100304",
+  "heroCode": "100304",
+  "displayName": "Naruto Kurama",
+  "chaseSystemLegend": {
+    "fall": "Queda / Derrubado (alvo cai no chão)",
+    "popup": "Flutuação Baixa (alvo é lançado em baixa altitude)",
+    "launcher": "Flutuação Alta (alvo é lançado em grande altitude)",
+    "back": "Empurrão / Repelido (alvo é arremessado para trás)"
+  },
+  "combatProfile": {
+    "heroCode": "100304",
+    "name": "Naruto Kurama",
+    "combatRole": "dps",
+    "combatRoleLabel": "Dano (DPS)",
+    "natureId": 1,
+    "nature": "wind",
+    "natureLabel": "Vento",
+    "quality": 10,
+    "star": 1,
+    "maxStar": 10,
+    "tags": [
+      "wind"
+    ],
+    "baseStats": {
+      "hp": 2117,
+      "attack": 535,
+      "defense": 119,
+      "hpGrowth": 1.7455,
+      "attackGrowth": 1.3993,
+      "defenseGrowth": 1.182,
+      "crit": 0.08,
+      "uncrit": 0,
+      "critDeepen": 0,
+      "block": 0,
+      "unblock": 0.05,
+      "blockDeepen": 0,
+      "hurtBonus": 0.06,
+      "hurtReduction": 0.05,
+      "skillRate": 0.4,
+      "lifesteal": 0,
+      "control": 0,
+      "uncontrol": 0,
+      "cure": 0,
+      "ultimateDamage": 0,
+      "ultimateDefense": 0
+    },
+    "chakraAnger": {
+      "base": 0,
+      "rules": {
+        "m1": {
+          "a1": 30,
+          "a2": 700
+        },
+        "m2": {
+          "a1": 180
+        },
+        "m3": {
+          "a1": 200
+        },
+        "m4": {
+          "a1": 0
+        },
+        "m5": {
+          "a1": 100
+        }
+      }
+    },
+    "chaseComboSummary": {
+      "initiators": [],
+      "chasers": [
+        {
+          "slot": "chase1",
+          "skillId": "hero304_c1",
+          "skillName": "Super Mini Bomba Bijuu",
+          "requiresStates": [
+            "back"
+          ],
+          "requiresStateLabels": [
+            "Empurrão / Repelido"
+          ]
+        }
+      ]
+    }
+  },
+  "skills": {
+    "attack": {
+      "id": "hero304_n1",
+      "animKey": "attack",
+      "slotLabel": "Ataque Normal",
+      "name": "Ataque da Kurama",
+      "desc": "Atinge um inimigo com 100% de dano de taijutsu e ninjutsu e repele; queima por 2 rodadas.",
+      "descPlain": "Atinge um inimigo com 100% de dano de taijutsu e ninjutsu e repele; queima por 2 rodadas.",
+      "skillType": 0,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "effectIds": [
+        "hero304_n1_1",
+        "hero304_n1_2"
+      ],
+      "iconName": "skill_hero304_n1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_n1.png",
+      "iconFile": "icones_skills/01_ataque_normal_Ataque_da_Kurama.png"
+    },
+    "skill": {
+      "id": "hero304_a1",
+      "animKey": "skill",
+      "slotLabel": "Habilidade",
+      "name": "Ataque da Kurama",
+      "desc": "Atinge um inimigo com 150% de dano de taijutsu e ninjutsu e repele; queima por 2 rodadas.",
+      "descPlain": "Atinge um inimigo com 150% de dano de taijutsu e ninjutsu e repele; queima por 2 rodadas.",
+      "skillType": 1,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "effectIds": [
+        "hero304_a1_1",
+        "hero304_a1_2"
+      ],
+      "iconName": "skill_hero304_a1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_a1.png",
+      "iconFile": "icones_skills/02_habilidade_Ataque_da_Kurama.png"
+    },
+    "UniqueSkill": {
+      "id": "hero304_s1",
+      "animKey": "UniqueSkill",
+      "slotLabel": "Ôgi (Ultimate)",
+      "name": "Rasen Shuriken Planetário de Bijuu",
+      "desc": "Atinge todos os inimigos com 155% de dano de taijutsu e ninjutsu e repele.",
+      "descPlain": "Atinge todos os inimigos com 155% de dano de taijutsu e ninjutsu e repele.",
+      "skillType": 2,
+      "targetFlags": [
+        "ENEMY_ALL"
+      ],
+      "targetType": "all_enemies",
+      "targetLabel": "Todos os Inimigos",
+      "effectIds": [
+        "hero304_s1_1"
+      ],
+      "iconName": "skill_hero304_s1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_s1.png",
+      "iconFile": "icones_skills/03_ultimate_Rasen_Shuriken_Planetario_de_Bijuu.png"
+    },
+    "chase1": {
+      "id": "hero304_c1",
+      "animKey": "chase1",
+      "slotLabel": "Perseguição 1",
+      "name": "Super Mini Bomba Bijuu",
+      "desc": "Persegue alvos (Repelimento): atinge um inimigo com 50% de dano de taijutsu e ninjutsu e arremessa ao alto; imobiliza (30%, 1 rodada).",
+      "descPlain": "Persegue alvos (Repelimento): atinge um inimigo com 50% de dano de taijutsu e ninjutsu e arremessa ao alto; imobiliza (30%, 1 rodada).",
+      "skillType": 15,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "chaseTriggers": [
+        "back"
+      ],
+      "chaseTriggerLabels": [
+        "Empurrão / Repelido"
+      ],
+      "effectIds": [
+        "hero304_c1_1",
+        "hero304_c1_2"
+      ],
+      "iconName": "skill_hero304_c1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_c1.png",
+      "iconFile": "icones_skills/04_perseguicao_1_Super_Mini_Bomba_Bijuu.png"
+    }
+  },
+  "passives": [
+    {
+      "id": "hero304_p1",
+      "name": "Jutsu de Teletransporte Dourado",
+      "desc": "Esquiva +15%.",
+      "descPlain": "Esquiva +15%.",
+      "iconName": "skill_hero304_p1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_p1.png",
+      "skillType": 3,
+      "effectIds": [
+        "hero304_p1_1"
+      ],
+      "iconFile": "icones_skills/passiva_01_Jutsu_de_Teletransporte_Dourado.png"
+    },
+    {
+      "id": "hero304_p2",
+      "name": "Chakra do Bijuu (Imunidade)",
+      "desc": "Resistência a controle +25%.",
+      "descPlain": "Resistência a controle +25%.",
+      "iconName": "skill_hero304_p2",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_p2.png",
+      "skillType": 3,
+      "effectIds": [
+        "hero304_p2_1"
+      ],
+      "iconFile": "icones_skills/passiva_02_Chakra_do_Bijuu_Imunidade.png"
+    }
+  ]
+}

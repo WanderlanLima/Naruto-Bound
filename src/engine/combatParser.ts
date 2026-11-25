@@ -209,7 +209,7 @@ export function inferRolesFromAnimList(animNames: string[]): GameCharacterRoles 
     /^ogi$/,
     /unique|ultimate|aoyi|super/,
   ]);
-  roles.chase = take([/^chase$/, /^chase_?1$/, /^chase_?1action$/, /^zhuida$/, /chase|zhuida/]);
+  roles.chase = take([/^chase$/, /^chase_?1$/, /^chase_?1action$/, /^zhuida$/, /chase|zhuida|perseg|gatilho/]);
   roles.hurt = take([/^hurt$/, /^hurt_?1$/, /^hit$/, /^behit$/, /hurt|behit/]);
   roles.die = take([/^die$/, /^dead$/, /^death$/, /die|dead/]);
   roles.win = take([/^win$/, /^victory$/, /^pose$/, /win|victory/]);
@@ -229,6 +229,35 @@ export function inferRolesFromAnimList(animNames: string[]): GameCharacterRoles 
   }
 
   return roles;
+}
+
+/**
+ * Ensures missing role slots (especially `chase` when exported inside `roles.skills`)
+ * are cleanly populated from available animation slugs.
+ */
+export function normalizeCharacterRoles(
+  rawRoles: Partial<GameCharacterRoles> | null | undefined,
+  animNames: string[]
+): GameCharacterRoles {
+  const inferred = inferRolesFromAnimList(animNames);
+  const existingSkills = Array.isArray(rawRoles?.skills) ? rawRoles.skills : [];
+  const mergedSkills = Array.from(new Set([...existingSkills, ...inferred.skills]));
+  const chaseFromSkills = mergedSkills.find((s) => /chase|zhuida|perseg|gatilho/i.test(s));
+
+  return {
+    idle: rawRoles?.idle || inferred.idle,
+    move: rawRoles?.move || inferred.move,
+    jump: rawRoles?.jump || inferred.jump,
+    fly: rawRoles?.fly || inferred.fly,
+    fall: rawRoles?.fall || inferred.fall,
+    attack: rawRoles?.attack || inferred.attack,
+    skills: mergedSkills,
+    ultimate: rawRoles?.ultimate || inferred.ultimate,
+    chase: rawRoles?.chase || chaseFromSkills || inferred.chase,
+    hurt: rawRoles?.hurt || inferred.hurt,
+    die: rawRoles?.die || inferred.die,
+    win: rawRoles?.win || inferred.win,
+  };
 }
 
 /**
@@ -377,7 +406,13 @@ export function buildDynamicCombatKit(
   combatJson: RawCombatJson | null | undefined,
   roles: GameCharacterRoles,
   fallbackName: string,
-  overrides?: { maxHp?: number; baseDmg?: number; nature?: string; roleLabel?: string }
+  overrides?: {
+    maxHp?: number;
+    baseDmg?: number;
+    nature?: string;
+    roleLabel?: string;
+    availableAnims?: Iterable<string>;
+  }
 ): DynamicCombatKit {
   const cp = combatJson?.combatProfile;
   const bs = cp?.baseStats;
@@ -461,9 +496,46 @@ export function buildDynamicCombatKit(
     rawUlt?.descPlain
   );
 
-  const distinctSkillSlug = (roles.skills || []).find(
-    (s) => !/chase|zhuida|ultimate|unique/.test(s.toLowerCase()) && s !== roles.attack
-  );
+  const allKnownAnims = new Set<string>([
+    ...(overrides?.availableAnims || []),
+    ...[
+      roles.idle,
+      roles.move,
+      roles.jump,
+      roles.fly,
+      roles.fall,
+      roles.attack,
+      roles.ultimate,
+      roles.chase,
+      roles.hurt,
+      roles.die,
+      roles.win,
+      ...(roles.skills || []),
+    ].filter((x): x is string => Boolean(x)),
+  ]);
+
+  const matchAnimHint = (hint?: string): string | undefined => {
+    if (!hint) return undefined;
+    if (allKnownAnims.has(hint)) return hint;
+    const low = hint.toLowerCase();
+    const slug = toGameSlug(hint, '');
+    for (const candidate of allKnownAnims) {
+      if (candidate.toLowerCase() === low || (slug && toGameSlug(candidate, '') === slug)) {
+        return candidate;
+      }
+    }
+    return undefined;
+  };
+
+  const distinctSkillSlug =
+    matchAnimHint(rawSkill?.animKey) ||
+    (roles.skills || []).find(
+      (s) => !/chase|zhuida|ultimate|unique/.test(s.toLowerCase()) && s !== roles.attack
+    );
+
+  const attackAnimSlug = matchAnimHint(rawAttack?.animKey) || roles.attack;
+  const ultAnimSlug =
+    matchAnimHint(rawUlt?.animKey) || roles.ultimate || distinctSkillSlug || roles.attack;
 
   const attackSpec: ActionSkillSpec = {
     slot: 'attack',
@@ -474,7 +546,7 @@ export function buildDynamicCombatKit(
     statusEffects: attackEffects,
     damageMultiplier: 1.0,
     chakraCost: 0,
-    animSlug: roles.attack,
+    animSlug: attackAnimSlug,
   };
 
   const skillSpec: ActionSkillSpec = {
@@ -486,7 +558,7 @@ export function buildDynamicCombatKit(
     statusEffects: skillEffects.length > 0 ? skillEffects : attackEffects,
     damageMultiplier: 1.38,
     chakraCost: 40,
-    animSlug: distinctSkillSlug || roles.attack,
+    animSlug: distinctSkillSlug || attackAnimSlug,
   };
 
   const ultSpec: ActionSkillSpec = {
@@ -498,16 +570,19 @@ export function buildDynamicCombatKit(
     statusEffects: ultEffects.length > 0 ? ultEffects : skillEffects,
     damageMultiplier: 2.05,
     chakraCost: 100,
-    animSlug: roles.ultimate || distinctSkillSlug || roles.attack,
+    animSlug: ultAnimSlug,
   };
 
   // Build dynamic chase list from chaseComboSummary.chasers + chase* skill entries
   const chasers: ChaseSkillSpec[] = [];
   const seenChaseKeys = new Set<string>();
-  const chaseAnimSlugs = [
-    ...(roles.chase ? [roles.chase] : []),
-    ...(roles.skills || []).filter((s) => /chase|zhuida/.test(s.toLowerCase())),
-  ];
+  const chaseAnimSlugs = Array.from(
+    new Set([
+      ...(roles.chase ? [roles.chase] : []),
+      ...(roles.skills || []).filter((s) => /chase|zhuida|perseg|gatilho/i.test(s)),
+      ...Array.from(allKnownAnims).filter((s) => /chase|zhuida|perseg|gatilho/i.test(s)),
+    ])
+  );
 
   const addChaser = (
     slot: string,
@@ -515,7 +590,8 @@ export function buildDynamicCombatKit(
     reqRaw: string[] | undefined,
     causesRaw: string[] | undefined,
     applied: string[] | undefined,
-    desc?: string
+    desc?: string,
+    animKey?: string
   ) => {
     const reqs = (reqRaw || [])
       .map((s) => normalizeChaseState(s))
@@ -531,23 +607,32 @@ export function buildDynamicCombatKit(
         .find((s): s is ChaseState => Boolean(s)) || 'fall';
 
     const idx = chasers.length;
+    const slotSlug = toGameSlug(slot, '');
+    const slotMatchedAnim =
+      matchAnimHint(animKey) ||
+      matchAnimHint(skillsMap[slot]?.animKey) ||
+      chaseAnimSlugs.find((s) => slotSlug && toGameSlug(s, '').includes(slotSlug));
+
     chasers.push({
       slot,
       name,
       requiresStates: reqs,
       causesState: causes,
       statusEffects: parseStatusEffects(applied, desc),
-      animSlug: chaseAnimSlugs[idx] || chaseAnimSlugs[0] || roles.chase || roles.attack,
+      animSlug: slotMatchedAnim || chaseAnimSlugs[idx] || chaseAnimSlugs[0] || roles.chase || roles.attack,
     });
   };
 
   for (const ch of cp?.chaseComboSummary?.chasers || []) {
+    const skRef = ch.slot ? skillsMap[ch.slot] : undefined;
     addChaser(
       ch.slot || `chase${chasers.length + 1}`,
       ch.skillName || 'Perseguição',
       ch.requiresStates,
       ch.causesStates,
-      ch.appliedEffects
+      ch.appliedEffects,
+      skRef?.descPlain,
+      skRef?.animKey
     );
   }
 
@@ -559,7 +644,8 @@ export function buildDynamicCombatKit(
         sk.chaseTriggers,
         sk.causesChaseStates,
         sk.appliedEffects,
-        sk.descPlain
+        sk.descPlain,
+        sk.animKey
       );
     }
   }
@@ -572,7 +658,8 @@ export function buildDynamicCombatKit(
         p.chaseTriggers,
         p.causesChaseStates,
         p.appliedEffects,
-        p.descPlain
+        p.descPlain,
+        p.animKey
       );
     }
   }

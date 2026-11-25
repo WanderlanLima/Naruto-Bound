@@ -67,6 +67,7 @@ function sampleTimeline(
   if (!frames || frames.length === 0) return null;
   const getVal = (f: any, j: number) => (f[fields[j]] === undefined ? defaults[j] : f[fields[j]]);
   const t0 = frames[0].time || 0;
+  if (t < t0 - 1e-5) return [...defaults];
   if (t <= t0) return fields.map((_, j) => getVal(frames[0], j));
   const last = frames[frames.length - 1];
   if (t >= (last.time || 0)) return fields.map((_, j) => getVal(last, j));
@@ -291,7 +292,14 @@ function drawLegacySpineEffect(
     );
     ctx.scale(1, -1);
     ctx.globalAlpha = alpha;
-    ctx.globalCompositeOperation = s.blend === 'additive' ? 'lighter' : 'source-over';
+    ctx.globalCompositeOperation =
+      s.blend === 'additive'
+        ? 'lighter'
+        : s.blend === 'multiply'
+          ? 'multiply'
+          : s.blend === 'screen'
+            ? 'screen'
+            : 'source-over';
 
     const dx = (-rg.ow / 2 + rg.ox) * kx;
     const dy = -((-rg.oh / 2 + rg.oy) * ky + rg.h * ky);

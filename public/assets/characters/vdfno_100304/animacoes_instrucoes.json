@@ -1,0 +1,2443 @@
+{
+  "characterId": "vdfno_100304",
+  "heroCode": "100304",
+  "displayName": "Naruto Kurama",
+  "atlasFile": "vdfno_100304.atlas",
+  "skeletonFile": "vdfno_100304.json",
+  "combatFile": "combate_e_habilidades.json",
+  "effectScope": "all",
+  "notes": "As definicoes completas de ossos, slots, keyframes e eventos @CMD ficam no arquivo .json (skeleton). Cada animacao inclui <anim>_spritesheet.json (Phaser/Godot/Unity) com pivo dos pes (anchorX/anchorY) e timestamps exatos em ms. As mecanicas de combate ficam em combate_e_habilidades.json.",
+  "chaseSystemLegend": {
+    "fall": "Queda / Derrubado (alvo cai no chão)",
+    "popup": "Flutuação Baixa (alvo é lançado em baixa altitude)",
+    "launcher": "Flutuação Alta (alvo é lançado em grande altitude)",
+    "back": "Empurrão / Repelido (alvo é arremessado para trás)"
+  },
+  "combatProfile": {
+    "heroCode": "100304",
+    "name": "Naruto Kurama",
+    "combatRole": "dps",
+    "combatRoleLabel": "Dano (DPS)",
+    "natureId": 1,
+    "nature": "wind",
+    "natureLabel": "Vento",
+    "quality": 10,
+    "star": 1,
+    "maxStar": 10,
+    "tags": [
+      "wind"
+    ],
+    "baseStats": {
+      "hp": 2117,
+      "attack": 535,
+      "defense": 119,
+      "hpGrowth": 1.7455,
+      "attackGrowth": 1.3993,
+      "defenseGrowth": 1.182,
+      "crit": 0.08,
+      "uncrit": 0,
+      "critDeepen": 0,
+      "block": 0,
+      "unblock": 0.05,
+      "blockDeepen": 0,
+      "hurtBonus": 0.06,
+      "hurtReduction": 0.05,
+      "skillRate": 0.4,
+      "lifesteal": 0,
+      "control": 0,
+      "uncontrol": 0,
+      "cure": 0,
+      "ultimateDamage": 0,
+      "ultimateDefense": 0
+    },
+    "chakraAnger": {
+      "base": 0,
+      "rules": {
+        "m1": {
+          "a1": 30,
+          "a2": 700
+        },
+        "m2": {
+          "a1": 180
+        },
+        "m3": {
+          "a1": 200
+        },
+        "m4": {
+          "a1": 0
+        },
+        "m5": {
+          "a1": 100
+        }
+      }
+    },
+    "chaseComboSummary": {
+      "initiators": [],
+      "chasers": [
+        {
+          "slot": "chase1",
+          "skillId": "hero304_c1",
+          "skillName": "Super Mini Bomba Bijuu",
+          "requiresStates": [
+            "back"
+          ],
+          "requiresStateLabels": [
+            "Empurrão / Repelido"
+          ]
+        }
+      ]
+    }
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "spritesheetFile": "animacoes/idle/idle_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/idle/idle_spritesheet.json",
+      "baseDurationSec": 1.5,
+      "compositeDurationSec": 1.5,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "attack",
+      "skillLabel": "Ataque Normal: Ataque da Kurama",
+      "skillIconFile": "icones_skills/01_ataque_normal_Ataque_da_Kurama.png",
+      "spritesheetFile": "animacoes/attack/attack_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/attack/attack_spritesheet.json",
+      "baseDurationSec": 0.8334,
+      "compositeDurationSec": 0.8334,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 250,
+            "spineId": "noe_MRJLM123",
+            "effectAnim": "1",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 292,
+            "soundName": "nos_136_3"
+          },
+          {
+            "timeMs": 292,
+            "soundName": "nos_685_4"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [
+        {
+          "spineId": "noe_MRJLM123",
+          "effectAnim": "1",
+          "startTimeSec": 0.25,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLM123_n10f\",spine=\"noe_MRJLM123\",source=\"1\",loop=\"none\",targets=[\"self\"]}"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_136_3",
+          "timeSec": 0.2917,
+          "file": "audios/animacoes/nos_136_3.mp3"
+        },
+        {
+          "soundName": "nos_685_4",
+          "timeSec": 0.2917,
+          "file": "audios/animacoes/nos_685_4.mp3"
+        }
+      ]
+    },
+    {
+      "name": "skill",
+      "skillLabel": "Habilidade: Ataque da Kurama",
+      "skillIconFile": "icones_skills/02_habilidade_Ataque_da_Kurama.png",
+      "spritesheetFile": "animacoes/skill/skill_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/skill/skill_spritesheet.json",
+      "baseDurationSec": 2.0417,
+      "compositeDurationSec": 2.0417,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 250,
+            "spineId": "noe_MRJLM123",
+            "effectAnim": "1",
+            "layer": "front"
+          },
+          {
+            "timeMs": 542,
+            "spineId": "noe_MRJLM123",
+            "effectAnim": "2",
+            "layer": "front"
+          },
+          {
+            "timeMs": 1125,
+            "spineId": "noe_MRJLM123_3",
+            "effectAnim": "3hit",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 292,
+            "soundName": "nos_136_3"
+          },
+          {
+            "timeMs": 292,
+            "soundName": "nos_685_4"
+          },
+          {
+            "timeMs": 583,
+            "soundName": "nos_139_1"
+          },
+          {
+            "timeMs": 583,
+            "soundName": "nos_44_1"
+          },
+          {
+            "timeMs": 1292,
+            "soundName": "nos_44_1"
+          },
+          {
+            "timeMs": 1375,
+            "soundName": "nos_172_3"
+          },
+          {
+            "timeMs": 1667,
+            "soundName": "nos_152_5"
+          },
+          {
+            "timeMs": 1750,
+            "soundName": "nos_149_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [
+        {
+          "spineId": "noe_MRJLM123",
+          "effectAnim": "1",
+          "startTimeSec": 0.25,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLM123_a10f\",spine=\"noe_MRJLM123\",source=\"1\",loop=\"none\",targets=[\"self\"]}"
+        },
+        {
+          "spineId": "noe_MRJLM123",
+          "effectAnim": "2",
+          "startTimeSec": 0.5417,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLM123_a11f\",spine=\"noe_MRJLM123\",source=\"2\",loop=\"none\",targets=[\"self\"]}"
+        },
+        {
+          "spineId": "noe_MRJLM123_3",
+          "effectAnim": "3hit",
+          "startTimeSec": 1.125,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLM123_3_a12f\",spine=\"noe_MRJLM123_3\",source=\"3hit\",loop=\"none\",targets=[\"self\"]}"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_136_3",
+          "timeSec": 0.2917,
+          "file": "audios/animacoes/nos_136_3.mp3"
+        },
+        {
+          "soundName": "nos_685_4",
+          "timeSec": 0.2917,
+          "file": "audios/animacoes/nos_685_4.mp3"
+        },
+        {
+          "soundName": "nos_139_1",
+          "timeSec": 0.5833,
+          "file": "audios/animacoes/nos_139_1.mp3"
+        },
+        {
+          "soundName": "nos_44_1",
+          "timeSec": 0.5833,
+          "file": "audios/animacoes/nos_44_1.mp3"
+        },
+        {
+          "soundName": "nos_44_1",
+          "timeSec": 1.2917,
+          "file": "audios/animacoes/nos_44_1.mp3"
+        },
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 1.375,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        },
+        {
+          "soundName": "nos_152_5",
+          "timeSec": 1.6667,
+          "file": "audios/animacoes/nos_152_5.mp3"
+        },
+        {
+          "soundName": "nos_149_2",
+          "timeSec": 1.75,
+          "file": "audios/animacoes/nos_149_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "UniqueSkill",
+      "skillLabel": "Ôgi (Ultimate): Rasen Shuriken Planetário de Bijuu",
+      "skillIconFile": "icones_skills/03_ultimate_Rasen_Shuriken_Planetario_de_Bijuu.png",
+      "spritesheetFile": "animacoes/UniqueSkill/UniqueSkill_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/UniqueSkill/UniqueSkill_spritesheet.json",
+      "baseDurationSec": 7.75,
+      "compositeDurationSec": 7.75,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 375,
+            "spineId": "noe_JMRaoyi",
+            "effectAnim": "JMR_aoyi",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 375,
+            "soundName": "nos_1493_1"
+          },
+          {
+            "timeMs": 417,
+            "soundName": "nos_286_2"
+          },
+          {
+            "timeMs": 417,
+            "soundName": "nos_149_2"
+          },
+          {
+            "timeMs": 875,
+            "soundName": "nos_173_2"
+          },
+          {
+            "timeMs": 1208,
+            "soundName": "nos_146_3"
+          },
+          {
+            "timeMs": 1375,
+            "soundName": "nos_175_1"
+          },
+          {
+            "timeMs": 4958,
+            "soundName": "nos_177_1"
+          },
+          {
+            "timeMs": 5667,
+            "soundName": "nos_153_1"
+          },
+          {
+            "timeMs": 6333,
+            "soundName": "nos_148_1"
+          },
+          {
+            "timeMs": 7000,
+            "soundName": "nos_172_3"
+          }
+        ],
+        "videos": [
+          {
+            "timeMs": 1125,
+            "key": "vdfno_MINGRENjlm"
+          }
+        ]
+      },
+      "effects": [
+        {
+          "spineId": "noe_JMRaoyi",
+          "effectAnim": "JMR_aoyi",
+          "startTimeSec": 0.375,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_JMRaoyi_s10f\",spine=\"noe_JMRaoyi\",source=\"JMR_aoyi\",loop=\"none\",targets=[\"self\"]}"
+        }
+      ],
+      "videos": [
+        {
+          "key": "vdfno_MINGRENjlm",
+          "source": "vdfno_MINGRENjlm",
+          "startTimeSec": 1.125,
+          "careforward": false,
+          "file": "videos/vdfno_MINGRENjlm.mp4"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_1493_1",
+          "timeSec": 0.375,
+          "file": "audios/animacoes/nos_1493_1.mp3"
+        },
+        {
+          "soundName": "nos_286_2",
+          "timeSec": 0.4167,
+          "file": "audios/animacoes/nos_286_2.mp3"
+        },
+        {
+          "soundName": "nos_149_2",
+          "timeSec": 0.4167,
+          "file": "audios/animacoes/nos_149_2.mp3"
+        },
+        {
+          "soundName": "nos_173_2",
+          "timeSec": 0.875,
+          "file": "audios/animacoes/nos_173_2.mp3"
+        },
+        {
+          "soundName": "nos_146_3",
+          "timeSec": 1.2083,
+          "file": "audios/animacoes/nos_146_3.mp3"
+        },
+        {
+          "soundName": "nos_175_1",
+          "timeSec": 1.375,
+          "file": "audios/animacoes/nos_175_1.mp3"
+        },
+        {
+          "soundName": "nos_177_1",
+          "timeSec": 4.9583,
+          "file": "audios/animacoes/nos_177_1.mp3"
+        },
+        {
+          "soundName": "nos_153_1",
+          "timeSec": 5.6667,
+          "file": "audios/animacoes/nos_153_1.mp3"
+        },
+        {
+          "soundName": "nos_148_1",
+          "timeSec": 6.3333,
+          "file": "audios/animacoes/nos_148_1.mp3"
+        },
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 7.0,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        }
+      ]
+    },
+    {
+      "name": "chase1",
+      "skillLabel": "Perseguição 1: Super Mini Bomba Bijuu",
+      "skillIconFile": "icones_skills/04_perseguicao_1_Super_Mini_Bomba_Bijuu.png",
+      "spritesheetFile": "animacoes/chase1/chase1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/chase1/chase1_spritesheet.json",
+      "baseDurationSec": 3.125,
+      "compositeDurationSec": 3.25,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 0,
+            "spineId": "noe_MRJLMcmnwsy",
+            "effectAnim": "shang",
+            "layer": "front"
+          },
+          {
+            "timeMs": 0,
+            "spineId": "noe_MRJLMcmnwsy",
+            "effectAnim": "xia",
+            "layer": "behind"
+          },
+          {
+            "timeMs": 2125,
+            "spineId": "noe_MRJLMcmnwsy",
+            "effectAnim": "quanping",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_146_3"
+          },
+          {
+            "timeMs": 417,
+            "soundName": "nos_156_1"
+          },
+          {
+            "timeMs": 542,
+            "soundName": "nos_173_2"
+          },
+          {
+            "timeMs": 583,
+            "soundName": "nos_1106_1"
+          },
+          {
+            "timeMs": 1250,
+            "soundName": "nos_172_3"
+          },
+          {
+            "timeMs": 1250,
+            "soundName": "nos_157_2"
+          },
+          {
+            "timeMs": 1583,
+            "soundName": "nos_125_1"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [
+        {
+          "spineId": "noe_MRJLMcmnwsy",
+          "effectAnim": "shang",
+          "startTimeSec": 0.0,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLMcmnwsy_c10f\",spine=\"noe_MRJLMcmnwsy\",source=\"shang\",loop=\"none\",targets=[\"self\"]}"
+        },
+        {
+          "spineId": "noe_MRJLMcmnwsy",
+          "effectAnim": "xia",
+          "startTimeSec": 0.0,
+          "layer": "behind",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLMcmnwsy_c10t\",spine=\"noe_MRJLMcmnwsy\",source=\"xia\",loop=\"none\",targets=[\"self\"],layer=\"rbg\"}"
+        },
+        {
+          "spineId": "noe_MRJLMcmnwsy",
+          "effectAnim": "quanping",
+          "startTimeSec": 2.125,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAY:name=\"noe_MRJLMcmnwsy_c11f\",spine=\"noe_MRJLMcmnwsy\",source=\"quanping\",loop=\"once\",layer=\"fg\",tela=5}"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_146_3",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_146_3.mp3"
+        },
+        {
+          "soundName": "nos_156_1",
+          "timeSec": 0.4167,
+          "file": "audios/animacoes/nos_156_1.mp3"
+        },
+        {
+          "soundName": "nos_173_2",
+          "timeSec": 0.5417,
+          "file": "audios/animacoes/nos_173_2.mp3"
+        },
+        {
+          "soundName": "nos_1106_1",
+          "timeSec": 0.5833,
+          "file": "audios/animacoes/nos_1106_1.mp3"
+        },
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 1.25,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        },
+        {
+          "soundName": "nos_157_2",
+          "timeSec": 1.25,
+          "file": "audios/animacoes/nos_157_2.mp3"
+        },
+        {
+          "soundName": "nos_125_1",
+          "timeSec": 1.5833,
+          "file": "audios/animacoes/nos_125_1.mp3"
+        }
+      ]
+    },
+    {
+      "name": "gatilho1",
+      "spritesheetFile": "animacoes/gatilho1/gatilho1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/gatilho1/gatilho1_spritesheet.json",
+      "baseDurationSec": 1.5417,
+      "compositeDurationSec": 1.5417,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 625,
+            "spineId": "noe_MRzy",
+            "effectAnim": "zzzzz",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_146_3"
+          },
+          {
+            "timeMs": 125,
+            "soundName": "nos_660_1"
+          },
+          {
+            "timeMs": 625,
+            "soundName": "nos_149_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [
+        {
+          "spineId": "noe_MRzy",
+          "effectAnim": "zzzzz",
+          "startTimeSec": 0.625,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRzy_g10f\",spine=\"noe_MRzy\",source=\"zzzzz\",loop=\"none\"}"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_146_3",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_146_3.mp3"
+        },
+        {
+          "soundName": "nos_660_1",
+          "timeSec": 0.125,
+          "file": "audios/animacoes/nos_660_1.mp3"
+        },
+        {
+          "soundName": "nos_149_2",
+          "timeSec": 0.625,
+          "file": "audios/animacoes/nos_149_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "uniqueSkill",
+      "effectiveAnimation": "UniqueSkill",
+      "skillLabel": "Ôgi (Ultimate): Rasen Shuriken Planetário de Bijuu",
+      "skillIconFile": "icones_skills/03_ultimate_Rasen_Shuriken_Planetario_de_Bijuu.png",
+      "spritesheetFile": "animacoes/uniqueSkill/uniqueSkill_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/uniqueSkill/uniqueSkill_spritesheet.json",
+      "baseDurationSec": 7.75,
+      "compositeDurationSec": 7.75,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 375,
+            "spineId": "noe_JMRaoyi",
+            "effectAnim": "JMR_aoyi",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 375,
+            "soundName": "nos_1493_1"
+          },
+          {
+            "timeMs": 417,
+            "soundName": "nos_286_2"
+          },
+          {
+            "timeMs": 417,
+            "soundName": "nos_149_2"
+          },
+          {
+            "timeMs": 875,
+            "soundName": "nos_173_2"
+          },
+          {
+            "timeMs": 1208,
+            "soundName": "nos_146_3"
+          },
+          {
+            "timeMs": 1375,
+            "soundName": "nos_175_1"
+          },
+          {
+            "timeMs": 4958,
+            "soundName": "nos_177_1"
+          },
+          {
+            "timeMs": 5667,
+            "soundName": "nos_153_1"
+          },
+          {
+            "timeMs": 6333,
+            "soundName": "nos_148_1"
+          },
+          {
+            "timeMs": 7000,
+            "soundName": "nos_172_3"
+          }
+        ],
+        "videos": [
+          {
+            "timeMs": 1125,
+            "key": "vdfno_MINGRENjlm"
+          }
+        ]
+      },
+      "effects": [
+        {
+          "spineId": "noe_JMRaoyi",
+          "effectAnim": "JMR_aoyi",
+          "startTimeSec": 0.375,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_JMRaoyi_s10f\",spine=\"noe_JMRaoyi\",source=\"JMR_aoyi\",loop=\"none\",targets=[\"self\"]}"
+        }
+      ],
+      "videos": [
+        {
+          "key": "vdfno_MINGRENjlm",
+          "source": "vdfno_MINGRENjlm",
+          "startTimeSec": 1.125,
+          "careforward": false,
+          "file": "videos/vdfno_MINGRENjlm.mp4"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_1493_1",
+          "timeSec": 0.375,
+          "file": "audios/animacoes/nos_1493_1.mp3"
+        },
+        {
+          "soundName": "nos_286_2",
+          "timeSec": 0.4167,
+          "file": "audios/animacoes/nos_286_2.mp3"
+        },
+        {
+          "soundName": "nos_149_2",
+          "timeSec": 0.4167,
+          "file": "audios/animacoes/nos_149_2.mp3"
+        },
+        {
+          "soundName": "nos_173_2",
+          "timeSec": 0.875,
+          "file": "audios/animacoes/nos_173_2.mp3"
+        },
+        {
+          "soundName": "nos_146_3",
+          "timeSec": 1.2083,
+          "file": "audios/animacoes/nos_146_3.mp3"
+        },
+        {
+          "soundName": "nos_175_1",
+          "timeSec": 1.375,
+          "file": "audios/animacoes/nos_175_1.mp3"
+        },
+        {
+          "soundName": "nos_177_1",
+          "timeSec": 4.9583,
+          "file": "audios/animacoes/nos_177_1.mp3"
+        },
+        {
+          "soundName": "nos_153_1",
+          "timeSec": 5.6667,
+          "file": "audios/animacoes/nos_153_1.mp3"
+        },
+        {
+          "soundName": "nos_148_1",
+          "timeSec": 6.3333,
+          "file": "audios/animacoes/nos_148_1.mp3"
+        },
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 7.0,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        }
+      ]
+    },
+    {
+      "name": "superUniqueSkill",
+      "effectiveAnimation": "UniqueSkill",
+      "skillLabel": "Ôgi (Ultimate): Rasen Shuriken Planetário de Bijuu",
+      "skillIconFile": "icones_skills/03_ultimate_Rasen_Shuriken_Planetario_de_Bijuu.png",
+      "spritesheetFile": "animacoes/superUniqueSkill/superUniqueSkill_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/superUniqueSkill/superUniqueSkill_spritesheet.json",
+      "baseDurationSec": 7.75,
+      "compositeDurationSec": 7.75,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 375,
+            "spineId": "noe_JMRaoyi",
+            "effectAnim": "JMR_aoyi",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 375,
+            "soundName": "nos_1493_1"
+          },
+          {
+            "timeMs": 417,
+            "soundName": "nos_286_2"
+          },
+          {
+            "timeMs": 417,
+            "soundName": "nos_149_2"
+          },
+          {
+            "timeMs": 875,
+            "soundName": "nos_173_2"
+          },
+          {
+            "timeMs": 1208,
+            "soundName": "nos_146_3"
+          },
+          {
+            "timeMs": 1375,
+            "soundName": "nos_175_1"
+          },
+          {
+            "timeMs": 4958,
+            "soundName": "nos_177_1"
+          },
+          {
+            "timeMs": 5667,
+            "soundName": "nos_153_1"
+          },
+          {
+            "timeMs": 6333,
+            "soundName": "nos_148_1"
+          },
+          {
+            "timeMs": 7000,
+            "soundName": "nos_172_3"
+          }
+        ],
+        "videos": [
+          {
+            "timeMs": 1125,
+            "key": "vdfno_MINGRENjlm"
+          }
+        ]
+      },
+      "effects": [
+        {
+          "spineId": "noe_JMRaoyi",
+          "effectAnim": "JMR_aoyi",
+          "startTimeSec": 0.375,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_JMRaoyi_s10f\",spine=\"noe_JMRaoyi\",source=\"JMR_aoyi\",loop=\"none\",targets=[\"self\"]}"
+        }
+      ],
+      "videos": [
+        {
+          "key": "vdfno_MINGRENjlm",
+          "source": "vdfno_MINGRENjlm",
+          "startTimeSec": 1.125,
+          "careforward": false,
+          "file": "videos/vdfno_MINGRENjlm.mp4"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_1493_1",
+          "timeSec": 0.375,
+          "file": "audios/animacoes/nos_1493_1.mp3"
+        },
+        {
+          "soundName": "nos_286_2",
+          "timeSec": 0.4167,
+          "file": "audios/animacoes/nos_286_2.mp3"
+        },
+        {
+          "soundName": "nos_149_2",
+          "timeSec": 0.4167,
+          "file": "audios/animacoes/nos_149_2.mp3"
+        },
+        {
+          "soundName": "nos_173_2",
+          "timeSec": 0.875,
+          "file": "audios/animacoes/nos_173_2.mp3"
+        },
+        {
+          "soundName": "nos_146_3",
+          "timeSec": 1.2083,
+          "file": "audios/animacoes/nos_146_3.mp3"
+        },
+        {
+          "soundName": "nos_175_1",
+          "timeSec": 1.375,
+          "file": "audios/animacoes/nos_175_1.mp3"
+        },
+        {
+          "soundName": "nos_177_1",
+          "timeSec": 4.9583,
+          "file": "audios/animacoes/nos_177_1.mp3"
+        },
+        {
+          "soundName": "nos_153_1",
+          "timeSec": 5.6667,
+          "file": "audios/animacoes/nos_153_1.mp3"
+        },
+        {
+          "soundName": "nos_148_1",
+          "timeSec": 6.3333,
+          "file": "audios/animacoes/nos_148_1.mp3"
+        },
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 7.0,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        }
+      ]
+    },
+    {
+      "name": "run",
+      "spritesheetFile": "animacoes/run/run_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/run/run_spritesheet.json",
+      "baseDurationSec": 0.1667,
+      "compositeDurationSec": 0.1667,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "win",
+      "spritesheetFile": "animacoes/win/win_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/win/win_spritesheet.json",
+      "baseDurationSec": 0.5,
+      "compositeDurationSec": 0.5,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 0,
+            "soundName": "nos_284_2"
+          },
+          {
+            "timeMs": 0,
+            "soundName": "nos_288_2"
+          },
+          {
+            "timeMs": 0,
+            "soundName": "nos_286_2"
+          },
+          {
+            "timeMs": 83,
+            "soundName": "nos_172_3"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_284_2",
+          "timeSec": 0.0,
+          "file": "audios/animacoes/nos_284_2.mp3"
+        },
+        {
+          "soundName": "nos_288_2",
+          "timeSec": 0.0,
+          "file": "audios/animacoes/nos_288_2.mp3"
+        },
+        {
+          "soundName": "nos_286_2",
+          "timeSec": 0.0,
+          "file": "audios/animacoes/nos_286_2.mp3"
+        },
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 0.0833,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        }
+      ]
+    },
+    {
+      "name": "cast",
+      "spritesheetFile": "animacoes/cast/cast_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/cast/cast_spritesheet.json",
+      "baseDurationSec": 0.3334,
+      "compositeDurationSec": 0.3334,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 208,
+            "soundName": "nos_174_1"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_174_1",
+          "timeSec": 0.2083,
+          "file": "audios/animacoes/nos_174_1.mp3"
+        }
+      ]
+    },
+    {
+      "name": "charge",
+      "spritesheetFile": "animacoes/charge/charge_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/charge/charge_spritesheet.json",
+      "baseDurationSec": 0.5,
+      "compositeDurationSec": 0.5,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "hurt1",
+      "spritesheetFile": "animacoes/hurt1/hurt1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/hurt1/hurt1_spritesheet.json",
+      "baseDurationSec": 0.2917,
+      "compositeDurationSec": 0.2917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_934_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_934_2",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_934_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "die",
+      "spritesheetFile": "animacoes/die/die_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/die/die_spritesheet.json",
+      "baseDurationSec": 0.7084,
+      "compositeDurationSec": 0.7084,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 250,
+            "soundName": "nos_170_1"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_170_1",
+          "timeSec": 0.25,
+          "file": "audios/animacoes/nos_170_1.mp3"
+        }
+      ]
+    },
+    {
+      "name": "D_air_air1",
+      "spritesheetFile": "animacoes/D_air_air1/D_air_air1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_air1/D_air_air1_spritesheet.json",
+      "baseDurationSec": 1.2917,
+      "compositeDurationSec": 1.2917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_air2",
+      "spritesheetFile": "animacoes/D_air_air2/D_air_air2_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_air2/D_air_air2_spritesheet.json",
+      "baseDurationSec": 1.7084,
+      "compositeDurationSec": 1.7084,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_behit1",
+      "spritesheetFile": "animacoes/D_air_behit1/D_air_behit1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_behit1/D_air_behit1_spritesheet.json",
+      "baseDurationSec": 0.4167,
+      "compositeDurationSec": 0.4167,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_behit2",
+      "spritesheetFile": "animacoes/D_air_behit2/D_air_behit2_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_behit2/D_air_behit2_spritesheet.json",
+      "baseDurationSec": 0.4167,
+      "compositeDurationSec": 0.4167,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_behit4",
+      "spritesheetFile": "animacoes/D_air_behit4/D_air_behit4_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_behit4/D_air_behit4_spritesheet.json",
+      "baseDurationSec": 0.125,
+      "compositeDurationSec": 0.125,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_land",
+      "spritesheetFile": "animacoes/D_air_land/D_air_land_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_land/D_air_land_spritesheet.json",
+      "baseDurationSec": 0.7084,
+      "compositeDurationSec": 0.7084,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_land1",
+      "spritesheetFile": "animacoes/D_air_land1/D_air_land1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_land1/D_air_land1_spritesheet.json",
+      "baseDurationSec": 0.8334,
+      "compositeDurationSec": 0.8334,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_stand",
+      "spritesheetFile": "animacoes/D_air_stand/D_air_stand_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_stand/D_air_stand_spritesheet.json",
+      "baseDurationSec": 0.7917,
+      "compositeDurationSec": 0.7917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_upair",
+      "spritesheetFile": "animacoes/D_air_upair/D_air_upair_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_upair/D_air_upair_spritesheet.json",
+      "baseDurationSec": 0.625,
+      "compositeDurationSec": 0.625,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_air_upair1",
+      "spritesheetFile": "animacoes/D_air_upair1/D_air_upair1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_air_upair1/D_air_upair1_spritesheet.json",
+      "baseDurationSec": 0.1667,
+      "compositeDurationSec": 0.1667,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_land",
+      "spritesheetFile": "animacoes/D_land/D_land_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_land/D_land_spritesheet.json",
+      "baseDurationSec": 0.0834,
+      "compositeDurationSec": 0.0834,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_land_land",
+      "spritesheetFile": "animacoes/D_land_land/D_land_land_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_land_land/D_land_land_spritesheet.json",
+      "baseDurationSec": 0.7084,
+      "compositeDurationSec": 0.7084,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_land_stand",
+      "spritesheetFile": "animacoes/D_land_stand/D_land_stand_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_land_stand/D_land_stand_spritesheet.json",
+      "baseDurationSec": 0.3334,
+      "compositeDurationSec": 0.3334,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_land_twitch",
+      "spritesheetFile": "animacoes/D_land_twitch/D_land_twitch_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_land_twitch/D_land_twitch_spritesheet.json",
+      "baseDurationSec": 0.2084,
+      "compositeDurationSec": 0.2084,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_air",
+      "spritesheetFile": "animacoes/D_stand_air/D_stand_air_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_air/D_stand_air_spritesheet.json",
+      "baseDurationSec": 0.125,
+      "compositeDurationSec": 0.125,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_air1",
+      "spritesheetFile": "animacoes/D_stand_air1/D_stand_air1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_air1/D_stand_air1_spritesheet.json",
+      "baseDurationSec": 0.625,
+      "compositeDurationSec": 0.625,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit1",
+      "spritesheetFile": "animacoes/D_stand_behit1/D_stand_behit1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit1/D_stand_behit1_spritesheet.json",
+      "baseDurationSec": 0.2917,
+      "compositeDurationSec": 0.2917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit2",
+      "spritesheetFile": "animacoes/D_stand_behit2/D_stand_behit2_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit2/D_stand_behit2_spritesheet.json",
+      "baseDurationSec": 0.2917,
+      "compositeDurationSec": 0.2917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit3",
+      "spritesheetFile": "animacoes/D_stand_behit3/D_stand_behit3_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit3/D_stand_behit3_spritesheet.json",
+      "baseDurationSec": 0.2917,
+      "compositeDurationSec": 0.2917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit4",
+      "spritesheetFile": "animacoes/D_stand_behit4/D_stand_behit4_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit4/D_stand_behit4_spritesheet.json",
+      "baseDurationSec": 0.125,
+      "compositeDurationSec": 0.125,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit5",
+      "spritesheetFile": "animacoes/D_stand_behit5/D_stand_behit5_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit5/D_stand_behit5_spritesheet.json",
+      "baseDurationSec": 0.7917,
+      "compositeDurationSec": 0.7917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit6",
+      "spritesheetFile": "animacoes/D_stand_behit6/D_stand_behit6_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit6/D_stand_behit6_spritesheet.json",
+      "baseDurationSec": 0.2917,
+      "compositeDurationSec": 0.2917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit7",
+      "spritesheetFile": "animacoes/D_stand_behit7/D_stand_behit7_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit7/D_stand_behit7_spritesheet.json",
+      "baseDurationSec": 0.4167,
+      "compositeDurationSec": 0.4167,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit8",
+      "spritesheetFile": "animacoes/D_stand_behit8/D_stand_behit8_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit8/D_stand_behit8_spritesheet.json",
+      "baseDurationSec": 0.4167,
+      "compositeDurationSec": 0.4167,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_behit9",
+      "spritesheetFile": "animacoes/D_stand_behit9/D_stand_behit9_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_behit9/D_stand_behit9_spritesheet.json",
+      "baseDurationSec": 0.0834,
+      "compositeDurationSec": 0.0834,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_stand_land",
+      "spritesheetFile": "animacoes/D_stand_land/D_stand_land_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_stand_land/D_stand_land_spritesheet.json",
+      "baseDurationSec": 0.9584,
+      "compositeDurationSec": 0.9584,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_upair_air",
+      "spritesheetFile": "animacoes/D_upair_air/D_upair_air_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_upair_air/D_upair_air_spritesheet.json",
+      "baseDurationSec": 0.375,
+      "compositeDurationSec": 0.375,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_upair_air1",
+      "spritesheetFile": "animacoes/D_upair_air1/D_upair_air1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_upair_air1/D_upair_air1_spritesheet.json",
+      "baseDurationSec": 1.25,
+      "compositeDurationSec": 1.25,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_upair_air2",
+      "spritesheetFile": "animacoes/D_upair_air2/D_upair_air2_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_upair_air2/D_upair_air2_spritesheet.json",
+      "baseDurationSec": 1.7084,
+      "compositeDurationSec": 1.7084,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_upair_behit1",
+      "spritesheetFile": "animacoes/D_upair_behit1/D_upair_behit1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_upair_behit1/D_upair_behit1_spritesheet.json",
+      "baseDurationSec": 0.4167,
+      "compositeDurationSec": 0.4167,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_upair_behit2",
+      "spritesheetFile": "animacoes/D_upair_behit2/D_upair_behit2_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_upair_behit2/D_upair_behit2_spritesheet.json",
+      "baseDurationSec": 0.4167,
+      "compositeDurationSec": 0.4167,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "D_upair_behit4",
+      "spritesheetFile": "animacoes/D_upair_behit4/D_upair_behit4_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/D_upair_behit4/D_upair_behit4_spritesheet.json",
+      "baseDurationSec": 0.0834,
+      "compositeDurationSec": 0.0834,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "attackAction",
+      "effectiveAnimation": "attack",
+      "skillLabel": "Ataque Normal: Ataque da Kurama",
+      "skillIconFile": "icones_skills/01_ataque_normal_Ataque_da_Kurama.png",
+      "spritesheetFile": "animacoes/attackAction/attackAction_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/attackAction/attackAction_spritesheet.json",
+      "baseDurationSec": 0.8334,
+      "compositeDurationSec": 0.8334,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 250,
+            "spineId": "noe_MRJLM123",
+            "effectAnim": "1",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 292,
+            "soundName": "nos_136_3"
+          },
+          {
+            "timeMs": 292,
+            "soundName": "nos_685_4"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [
+        {
+          "spineId": "noe_MRJLM123",
+          "effectAnim": "1",
+          "startTimeSec": 0.25,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLM123_n10f\",spine=\"noe_MRJLM123\",source=\"1\",loop=\"none\",targets=[\"self\"]}"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_136_3",
+          "timeSec": 0.2917,
+          "file": "audios/animacoes/nos_136_3.mp3"
+        },
+        {
+          "soundName": "nos_685_4",
+          "timeSec": 0.2917,
+          "file": "audios/animacoes/nos_685_4.mp3"
+        }
+      ]
+    },
+    {
+      "name": "beatback1",
+      "spritesheetFile": "animacoes/beatback1/beatback1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/beatback1/beatback1_spritesheet.json",
+      "baseDurationSec": 0.0834,
+      "compositeDurationSec": 0.0834,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "beatback2",
+      "spritesheetFile": "animacoes/beatback2/beatback2_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/beatback2/beatback2_spritesheet.json",
+      "baseDurationSec": 0.1667,
+      "compositeDurationSec": 0.1667,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "beatback3",
+      "spritesheetFile": "animacoes/beatback3/beatback3_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/beatback3/beatback3_spritesheet.json",
+      "baseDurationSec": 0.8334,
+      "compositeDurationSec": 0.8334,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_170_1"
+          },
+          {
+            "timeMs": 42,
+            "soundName": "nos_236_2"
+          },
+          {
+            "timeMs": 42,
+            "soundName": "nos_937_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_170_1",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_170_1.mp3"
+        },
+        {
+          "soundName": "nos_236_2",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_236_2.mp3"
+        },
+        {
+          "soundName": "nos_937_2",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_937_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "beatback4",
+      "spritesheetFile": "animacoes/beatback4/beatback4_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/beatback4/beatback4_spritesheet.json",
+      "baseDurationSec": 0.25,
+      "compositeDurationSec": 0.25,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "beatback5",
+      "spritesheetFile": "animacoes/beatback5/beatback5_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/beatback5/beatback5_spritesheet.json",
+      "baseDurationSec": 0.2084,
+      "compositeDurationSec": 0.2084,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 83,
+            "soundName": "nos_114_1"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_114_1",
+          "timeSec": 0.0833,
+          "file": "audios/animacoes/nos_114_1.mp3"
+        }
+      ]
+    },
+    {
+      "name": "chase1Action",
+      "effectiveAnimation": "chase1",
+      "skillLabel": "Perseguição 1: Super Mini Bomba Bijuu",
+      "skillIconFile": "icones_skills/04_perseguicao_1_Super_Mini_Bomba_Bijuu.png",
+      "spritesheetFile": "animacoes/chase1Action/chase1Action_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/chase1Action/chase1Action_spritesheet.json",
+      "baseDurationSec": 3.125,
+      "compositeDurationSec": 3.25,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 0,
+            "spineId": "noe_MRJLMcmnwsy",
+            "effectAnim": "shang",
+            "layer": "front"
+          },
+          {
+            "timeMs": 0,
+            "spineId": "noe_MRJLMcmnwsy",
+            "effectAnim": "xia",
+            "layer": "behind"
+          },
+          {
+            "timeMs": 2125,
+            "spineId": "noe_MRJLMcmnwsy",
+            "effectAnim": "quanping",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_146_3"
+          },
+          {
+            "timeMs": 417,
+            "soundName": "nos_156_1"
+          },
+          {
+            "timeMs": 542,
+            "soundName": "nos_173_2"
+          },
+          {
+            "timeMs": 583,
+            "soundName": "nos_1106_1"
+          },
+          {
+            "timeMs": 1250,
+            "soundName": "nos_172_3"
+          },
+          {
+            "timeMs": 1250,
+            "soundName": "nos_157_2"
+          },
+          {
+            "timeMs": 1583,
+            "soundName": "nos_125_1"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [
+        {
+          "spineId": "noe_MRJLMcmnwsy",
+          "effectAnim": "shang",
+          "startTimeSec": 0.0,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLMcmnwsy_c10f\",spine=\"noe_MRJLMcmnwsy\",source=\"shang\",loop=\"none\",targets=[\"self\"]}"
+        },
+        {
+          "spineId": "noe_MRJLMcmnwsy",
+          "effectAnim": "xia",
+          "startTimeSec": 0.0,
+          "layer": "behind",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLMcmnwsy_c10t\",spine=\"noe_MRJLMcmnwsy\",source=\"xia\",loop=\"none\",targets=[\"self\"],layer=\"rbg\"}"
+        },
+        {
+          "spineId": "noe_MRJLMcmnwsy",
+          "effectAnim": "quanping",
+          "startTimeSec": 2.125,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAY:name=\"noe_MRJLMcmnwsy_c11f\",spine=\"noe_MRJLMcmnwsy\",source=\"quanping\",loop=\"once\",layer=\"fg\",tela=5}"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_146_3",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_146_3.mp3"
+        },
+        {
+          "soundName": "nos_156_1",
+          "timeSec": 0.4167,
+          "file": "audios/animacoes/nos_156_1.mp3"
+        },
+        {
+          "soundName": "nos_173_2",
+          "timeSec": 0.5417,
+          "file": "audios/animacoes/nos_173_2.mp3"
+        },
+        {
+          "soundName": "nos_1106_1",
+          "timeSec": 0.5833,
+          "file": "audios/animacoes/nos_1106_1.mp3"
+        },
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 1.25,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        },
+        {
+          "soundName": "nos_157_2",
+          "timeSec": 1.25,
+          "file": "audios/animacoes/nos_157_2.mp3"
+        },
+        {
+          "soundName": "nos_125_1",
+          "timeSec": 1.5833,
+          "file": "audios/animacoes/nos_125_1.mp3"
+        }
+      ]
+    },
+    {
+      "name": "dodge",
+      "spritesheetFile": "animacoes/dodge/dodge_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/dodge/dodge_spritesheet.json",
+      "baseDurationSec": 0.1667,
+      "compositeDurationSec": 0.1667,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "fall",
+      "spritesheetFile": "animacoes/fall/fall_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/fall/fall_spritesheet.json",
+      "baseDurationSec": 0.7084,
+      "compositeDurationSec": 0.7084,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 208,
+            "soundName": "nos_236_2"
+          },
+          {
+            "timeMs": 208,
+            "soundName": "nos_170_1"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_236_2",
+          "timeSec": 0.2083,
+          "file": "audios/animacoes/nos_236_2.mp3"
+        },
+        {
+          "soundName": "nos_170_1",
+          "timeSec": 0.2083,
+          "file": "audios/animacoes/nos_170_1.mp3"
+        }
+      ]
+    },
+    {
+      "name": "fly",
+      "spritesheetFile": "animacoes/fly/fly_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/fly/fly_spritesheet.json",
+      "baseDurationSec": 0.625,
+      "compositeDurationSec": 0.625,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_134_3"
+          },
+          {
+            "timeMs": 42,
+            "soundName": "nos_286_2"
+          },
+          {
+            "timeMs": 42,
+            "soundName": "nos_934_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_134_3",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_134_3.mp3"
+        },
+        {
+          "soundName": "nos_286_2",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_286_2.mp3"
+        },
+        {
+          "soundName": "nos_934_2",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_934_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "gatilho1Action",
+      "effectiveAnimation": "gatilho1",
+      "spritesheetFile": "animacoes/gatilho1Action/gatilho1Action_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/gatilho1Action/gatilho1Action_spritesheet.json",
+      "baseDurationSec": 1.5417,
+      "compositeDurationSec": 1.5417,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 625,
+            "spineId": "noe_MRzy",
+            "effectAnim": "zzzzz",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_146_3"
+          },
+          {
+            "timeMs": 125,
+            "soundName": "nos_660_1"
+          },
+          {
+            "timeMs": 625,
+            "soundName": "nos_149_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [
+        {
+          "spineId": "noe_MRzy",
+          "effectAnim": "zzzzz",
+          "startTimeSec": 0.625,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRzy_g10f\",spine=\"noe_MRzy\",source=\"zzzzz\",loop=\"none\"}"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_146_3",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_146_3.mp3"
+        },
+        {
+          "soundName": "nos_660_1",
+          "timeSec": 0.125,
+          "file": "audios/animacoes/nos_660_1.mp3"
+        },
+        {
+          "soundName": "nos_149_2",
+          "timeSec": 0.625,
+          "file": "audios/animacoes/nos_149_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "hurt2",
+      "spritesheetFile": "animacoes/hurt2/hurt2_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/hurt2/hurt2_spritesheet.json",
+      "baseDurationSec": 0.2917,
+      "compositeDurationSec": 0.2917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_934_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_934_2",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_934_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "hurtlong1",
+      "spritesheetFile": "animacoes/hurtlong1/hurtlong1_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/hurtlong1/hurtlong1_spritesheet.json",
+      "baseDurationSec": 0.7917,
+      "compositeDurationSec": 0.7917,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 542,
+            "soundName": "nos_172_3"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 0.5417,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        }
+      ]
+    },
+    {
+      "name": "hurtlong2",
+      "spritesheetFile": "animacoes/hurtlong2/hurtlong2_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/hurtlong2/hurtlong2_spritesheet.json",
+      "baseDurationSec": 0.4167,
+      "compositeDurationSec": 0.4167,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 42,
+            "soundName": "nos_934_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_934_2",
+          "timeSec": 0.0417,
+          "file": "audios/animacoes/nos_934_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "out",
+      "spritesheetFile": "animacoes/out/out_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/out/out_spritesheet.json",
+      "baseDurationSec": 0.4584,
+      "compositeDurationSec": 0.4584,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [
+          {
+            "timeMs": 250,
+            "soundName": "nos_285_3"
+          },
+          {
+            "timeMs": 250,
+            "soundName": "nos_287_1"
+          },
+          {
+            "timeMs": 250,
+            "soundName": "nos_284_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [],
+      "sounds": [
+        {
+          "soundName": "nos_285_3",
+          "timeSec": 0.25,
+          "file": "audios/animacoes/nos_285_3.mp3"
+        },
+        {
+          "soundName": "nos_287_1",
+          "timeSec": 0.25,
+          "file": "audios/animacoes/nos_287_1.mp3"
+        },
+        {
+          "soundName": "nos_284_2",
+          "timeSec": 0.25,
+          "file": "audios/animacoes/nos_284_2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "shunyi",
+      "spritesheetFile": "animacoes/shunyi/shunyi_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/shunyi/shunyi_spritesheet.json",
+      "baseDurationSec": 0.5,
+      "compositeDurationSec": 0.5,
+      "eventsMs": {
+        "hits": [],
+        "particles": [],
+        "sounds": [],
+        "videos": []
+      },
+      "effects": []
+    },
+    {
+      "name": "skillAction",
+      "effectiveAnimation": "skill",
+      "skillLabel": "Habilidade: Ataque da Kurama",
+      "skillIconFile": "icones_skills/02_habilidade_Ataque_da_Kurama.png",
+      "spritesheetFile": "animacoes/skillAction/skillAction_spritesheet.png",
+      "spritesheetMetaFile": "animacoes/skillAction/skillAction_spritesheet.json",
+      "baseDurationSec": 2.0417,
+      "compositeDurationSec": 2.0417,
+      "eventsMs": {
+        "hits": [],
+        "particles": [
+          {
+            "timeMs": 250,
+            "spineId": "noe_MRJLM123",
+            "effectAnim": "1",
+            "layer": "front"
+          },
+          {
+            "timeMs": 542,
+            "spineId": "noe_MRJLM123",
+            "effectAnim": "2",
+            "layer": "front"
+          },
+          {
+            "timeMs": 1125,
+            "spineId": "noe_MRJLM123_3",
+            "effectAnim": "3hit",
+            "layer": "front"
+          }
+        ],
+        "sounds": [
+          {
+            "timeMs": 292,
+            "soundName": "nos_136_3"
+          },
+          {
+            "timeMs": 292,
+            "soundName": "nos_685_4"
+          },
+          {
+            "timeMs": 583,
+            "soundName": "nos_139_1"
+          },
+          {
+            "timeMs": 583,
+            "soundName": "nos_44_1"
+          },
+          {
+            "timeMs": 1292,
+            "soundName": "nos_44_1"
+          },
+          {
+            "timeMs": 1375,
+            "soundName": "nos_172_3"
+          },
+          {
+            "timeMs": 1667,
+            "soundName": "nos_152_5"
+          },
+          {
+            "timeMs": 1750,
+            "soundName": "nos_149_2"
+          }
+        ],
+        "videos": []
+      },
+      "effects": [
+        {
+          "spineId": "noe_MRJLM123",
+          "effectAnim": "1",
+          "startTimeSec": 0.25,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLM123_a10f\",spine=\"noe_MRJLM123\",source=\"1\",loop=\"none\",targets=[\"self\"]}"
+        },
+        {
+          "spineId": "noe_MRJLM123",
+          "effectAnim": "2",
+          "startTimeSec": 0.5417,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLM123_a11f\",spine=\"noe_MRJLM123\",source=\"2\",loop=\"none\",targets=[\"self\"]}"
+        },
+        {
+          "spineId": "noe_MRJLM123_3",
+          "effectAnim": "3hit",
+          "startTimeSec": 1.125,
+          "layer": "front",
+          "isSelfOrScreen": true,
+          "includedInScope": true,
+          "loop": false,
+          "rawCommand": "{DISPLAYONFIGHTER:name=\"noe_MRJLM123_3_a12f\",spine=\"noe_MRJLM123_3\",source=\"3hit\",loop=\"none\",targets=[\"self\"]}"
+        }
+      ],
+      "sounds": [
+        {
+          "soundName": "nos_136_3",
+          "timeSec": 0.2917,
+          "file": "audios/animacoes/nos_136_3.mp3"
+        },
+        {
+          "soundName": "nos_685_4",
+          "timeSec": 0.2917,
+          "file": "audios/animacoes/nos_685_4.mp3"
+        },
+        {
+          "soundName": "nos_139_1",
+          "timeSec": 0.5833,
+          "file": "audios/animacoes/nos_139_1.mp3"
+        },
+        {
+          "soundName": "nos_44_1",
+          "timeSec": 0.5833,
+          "file": "audios/animacoes/nos_44_1.mp3"
+        },
+        {
+          "soundName": "nos_44_1",
+          "timeSec": 1.2917,
+          "file": "audios/animacoes/nos_44_1.mp3"
+        },
+        {
+          "soundName": "nos_172_3",
+          "timeSec": 1.375,
+          "file": "audios/animacoes/nos_172_3.mp3"
+        },
+        {
+          "soundName": "nos_152_5",
+          "timeSec": 1.6667,
+          "file": "audios/animacoes/nos_152_5.mp3"
+        },
+        {
+          "soundName": "nos_149_2",
+          "timeSec": 1.75,
+          "file": "audios/animacoes/nos_149_2.mp3"
+        }
+      ]
+    }
+  ],
+  "skills": {
+    "attack": {
+      "id": "hero304_n1",
+      "animKey": "attack",
+      "slotLabel": "Ataque Normal",
+      "name": "Ataque da Kurama",
+      "desc": "Atinge um inimigo com 100% de dano de taijutsu e ninjutsu e repele; queima por 2 rodadas.",
+      "descPlain": "Atinge um inimigo com 100% de dano de taijutsu e ninjutsu e repele; queima por 2 rodadas.",
+      "skillType": 0,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "effectIds": [
+        "hero304_n1_1",
+        "hero304_n1_2"
+      ],
+      "iconName": "skill_hero304_n1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_n1.png",
+      "iconFile": "icones_skills/01_ataque_normal_Ataque_da_Kurama.png"
+    },
+    "skill": {
+      "id": "hero304_a1",
+      "animKey": "skill",
+      "slotLabel": "Habilidade",
+      "name": "Ataque da Kurama",
+      "desc": "Atinge um inimigo com 150% de dano de taijutsu e ninjutsu e repele; queima por 2 rodadas.",
+      "descPlain": "Atinge um inimigo com 150% de dano de taijutsu e ninjutsu e repele; queima por 2 rodadas.",
+      "skillType": 1,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "effectIds": [
+        "hero304_a1_1",
+        "hero304_a1_2"
+      ],
+      "iconName": "skill_hero304_a1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_a1.png",
+      "iconFile": "icones_skills/02_habilidade_Ataque_da_Kurama.png"
+    },
+    "UniqueSkill": {
+      "id": "hero304_s1",
+      "animKey": "UniqueSkill",
+      "slotLabel": "Ôgi (Ultimate)",
+      "name": "Rasen Shuriken Planetário de Bijuu",
+      "desc": "Atinge todos os inimigos com 155% de dano de taijutsu e ninjutsu e repele.",
+      "descPlain": "Atinge todos os inimigos com 155% de dano de taijutsu e ninjutsu e repele.",
+      "skillType": 2,
+      "targetFlags": [
+        "ENEMY_ALL"
+      ],
+      "targetType": "all_enemies",
+      "targetLabel": "Todos os Inimigos",
+      "effectIds": [
+        "hero304_s1_1"
+      ],
+      "iconName": "skill_hero304_s1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_s1.png",
+      "iconFile": "icones_skills/03_ultimate_Rasen_Shuriken_Planetario_de_Bijuu.png"
+    },
+    "chase1": {
+      "id": "hero304_c1",
+      "animKey": "chase1",
+      "slotLabel": "Perseguição 1",
+      "name": "Super Mini Bomba Bijuu",
+      "desc": "Persegue alvos (Repelimento): atinge um inimigo com 50% de dano de taijutsu e ninjutsu e arremessa ao alto; imobiliza (30%, 1 rodada).",
+      "descPlain": "Persegue alvos (Repelimento): atinge um inimigo com 50% de dano de taijutsu e ninjutsu e arremessa ao alto; imobiliza (30%, 1 rodada).",
+      "skillType": 15,
+      "targetFlags": [
+        "ENEMY"
+      ],
+      "targetType": "single_enemy",
+      "targetLabel": "Único Inimigo",
+      "chaseTriggers": [
+        "back"
+      ],
+      "chaseTriggerLabels": [
+        "Empurrão / Repelido"
+      ],
+      "effectIds": [
+        "hero304_c1_1",
+        "hero304_c1_2"
+      ],
+      "iconName": "skill_hero304_c1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_c1.png",
+      "iconFile": "icones_skills/04_perseguicao_1_Super_Mini_Bomba_Bijuu.png"
+    }
+  },
+  "passives": [
+    {
+      "id": "hero304_p1",
+      "name": "Jutsu de Teletransporte Dourado",
+      "desc": "Esquiva +15%.",
+      "descPlain": "Esquiva +15%.",
+      "iconName": "skill_hero304_p1",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_p1.png",
+      "skillType": 3,
+      "effectIds": [
+        "hero304_p1_1"
+      ],
+      "iconFile": "icones_skills/passiva_01_Jutsu_de_Teletransporte_Dourado.png"
+    },
+    {
+      "id": "hero304_p2",
+      "name": "Chakra do Bijuu (Imunidade)",
+      "desc": "Resistência a controle +25%.",
+      "descPlain": "Resistência a controle +25%.",
+      "iconName": "skill_hero304_p2",
+      "iconUrl": "https://naruto.jotagame.com/acervo/asset/items/skill_hero304_p2.png",
+      "skillType": 3,
+      "effectIds": [
+        "hero304_p2_1"
+      ],
+      "iconFile": "icones_skills/passiva_02_Chakra_do_Bijuu_Imunidade.png"
+    }
+  ],
+  "voices": [
+    {
+      "key": "nos_1552_1",
+      "category": "batalha",
+      "label": "Voz de Batalha",
+      "file": "audios/vozes/batalha_nos_1552_1.mp3"
+    },
+    {
+      "key": "nos_1552_2",
+      "category": "batalha",
+      "label": "Voz de Batalha",
+      "file": "audios/vozes/batalha_nos_1552_2.mp3"
+    },
+    {
+      "key": "nos_1554_1",
+      "category": "transformacao",
+      "label": "Transformação / Especial",
+      "file": "audios/vozes/transformacao_nos_1554_1.mp3"
+    },
+    {
+      "key": "nos_1555_1",
+      "category": "despertar",
+      "label": "Despertar",
+      "file": "audios/vozes/despertar_nos_1555_1.mp3"
+    },
+    {
+      "key": "nos_1555_2",
+      "category": "despertar",
+      "label": "Despertar",
+      "file": "audios/vozes/despertar_nos_1555_2.mp3"
+    },
+    {
+      "key": "nos_1555_1",
+      "category": "subir_estrela",
+      "label": "Subir Estrela",
+      "file": "audios/vozes/subir_estrela_nos_1555_1.mp3"
+    },
+    {
+      "key": "nos_1555_2",
+      "category": "subir_estrela",
+      "label": "Subir Estrela",
+      "file": "audios/vozes/subir_estrela_nos_1555_2.mp3"
+    },
+    {
+      "key": "nos_661_1",
+      "category": "morte",
+      "label": "Voz de Derrota",
+      "file": "audios/vozes/morte_nos_661_1.mp3"
+    }
+  ],
+  "videos": [
+    {
+      "key": "vdfno_MINGRENjlm",
+      "label": "Ultimate (UniqueSkill)",
+      "kind": "ultimate",
+      "animName": "UniqueSkill",
+      "startTimeSec": 1.125,
+      "file": "videos/vdfno_MINGRENjlm.mp4"
+    }
+  ]
+}

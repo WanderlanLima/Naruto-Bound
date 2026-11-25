@@ -15,6 +15,10 @@ import type {
   LoadedNinjaRuntime,
   NinjaRosterEntry,
 } from './types/shinobi';
+import {
+  enterBattleFullscreenLandscape,
+  exitBattleFullscreenLandscape,
+} from './utils/viewportOrientation';
 
 export const App: React.FC = () => {
   const previewPoolRef = useRef<ObjectUrlPool>(new ObjectUrlPool());
@@ -76,6 +80,7 @@ export const App: React.FC = () => {
   };
 
   const handleConfirmPair = async (pair: [NinjaRosterEntry, NinjaRosterEntry]) => {
+    void enterBattleFullscreenLandscape();
     setLoadingMatch(true);
     setLoadError(null);
     disposeActiveMatch();
@@ -102,17 +107,20 @@ export const App: React.FC = () => {
 
   const handleRematch = () => {
     if (matchPair && matchRuntimes) {
+      void enterBattleFullscreenLandscape();
       setMatchKey((k) => k + 1);
     }
   };
 
   const handleChangeNinjas = () => {
     disposeActiveMatch();
+    void exitBattleFullscreenLandscape();
     setScreen('select');
   };
 
   const handleExitToMenu = () => {
     disposeActiveMatch();
+    void exitBattleFullscreenLandscape();
     setScreen('menu');
   };
 
