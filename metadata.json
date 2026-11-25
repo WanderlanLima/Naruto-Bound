@@ -1,0 +1,5 @@
+{
+  "name": "Shinobi Artillery",
+  "description": "Jogo de artilharia ninja por turnos com motor de animações sincronizado por pivô nos pés, linha do tempo eventsMs, efeitos pré-renderizados, combos dinâmicos e importação de ninjas do Shinobi Sprite Studio.",
+  "requestFramePermissions": []
+}

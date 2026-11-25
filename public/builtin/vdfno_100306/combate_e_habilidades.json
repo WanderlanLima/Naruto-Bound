@@ -1,0 +1,168 @@
+{
+  "schemaVersion": "shinobi-combat-v1",
+  "characterId": "vdfno_100306",
+  "heroCode": "vdfno_100306",
+  "displayName": "Sasuke [Susano’o]",
+  "combatProfile": {
+    "heroCode": "vdfno_100306",
+    "name": "Sasuke [Susano’o]",
+    "combatRole": "tank",
+    "combatRoleLabel": "Tanque",
+    "nature": "thunder",
+    "natureLabel": "Relâmpago",
+    "baseStats": {
+      "hp": 2350,
+      "attack": 434,
+      "defense": 104
+    },
+    "chaseComboSummary": {
+      "initiators": [
+        {
+          "slot": "attack",
+          "skillId": "vdfno_100306_atk",
+          "skillName": "Espada Chidori",
+          "causesStates": [
+            "popup"
+          ],
+          "causesStateLabels": [
+            "Flutuação baixa"
+          ],
+          "appliedEffects": []
+        },
+        {
+          "slot": "UniqueSkill",
+          "skillId": "vdfno_100306_ult",
+          "skillName": "Susano’o",
+          "causesStates": [
+            "popup"
+          ],
+          "causesStateLabels": [
+            "Flutuação baixa"
+          ],
+          "appliedEffects": []
+        }
+      ],
+      "chasers": [
+        {
+          "slot": "chase1",
+          "skillId": "vdfno_100306_chase1",
+          "skillName": "Susano’o: Ataque",
+          "requiresStates": [
+            "popup"
+          ],
+          "requiresStateLabels": [
+            "Flutuação baixa"
+          ],
+          "causesStates": [
+            "popup"
+          ],
+          "causesStateLabels": [
+            "Flutuação baixa"
+          ],
+          "appliedEffects": [
+            "Chamas"
+          ]
+        },
+        {
+          "slot": "chase2",
+          "skillId": "vdfno_100306_chase2",
+          "skillName": "Estilo Inferno: Controle de Chamas",
+          "requiresStates": [
+            "popup"
+          ],
+          "requiresStateLabels": [
+            "Flutuação baixa"
+          ],
+          "causesStates": [
+            "fall"
+          ],
+          "causesStateLabels": [
+            "Queda"
+          ],
+          "appliedEffects": [
+            "Chamas"
+          ]
+        }
+      ]
+    }
+  },
+  "skills": {
+    "attack": {
+      "id": "vdfno_100306_atk",
+      "slotLabel": "Ataque Normal",
+      "name": "Espada Chidori",
+      "causesChaseStates": [
+        "popup"
+      ],
+      "causesChaseStateLabels": [
+        "Flutuação baixa"
+      ],
+      "appliedEffects": []
+    },
+    "skill": {
+      "id": "vdfno_100306_skl",
+      "slotLabel": "Habilidade",
+      "name": "Espada Chidori",
+      "causesChaseStates": [
+        "popup"
+      ],
+      "causesChaseStateLabels": [
+        "Flutuação baixa"
+      ],
+      "appliedEffects": []
+    },
+    "UniqueSkill": {
+      "id": "vdfno_100306_ult",
+      "slotLabel": "Ôgi (Ultimate)",
+      "name": "Susano’o",
+      "causesChaseStates": [
+        "popup"
+      ],
+      "causesChaseStateLabels": [
+        "Flutuação baixa"
+      ],
+      "appliedEffects": []
+    },
+    "chase1": {
+      "id": "vdfno_100306_chase1",
+      "slotLabel": "Perseguição 1",
+      "name": "Susano’o: Ataque",
+      "chaseTriggers": [
+        "popup"
+      ],
+      "chaseTriggerLabels": [
+        "Flutuação baixa"
+      ],
+      "causesChaseStates": [
+        "popup"
+      ],
+      "causesChaseStateLabels": [
+        "Flutuação baixa"
+      ],
+      "appliedEffects": [
+        "Chamas"
+      ]
+    },
+    "chase2": {
+      "id": "vdfno_100306_chase2",
+      "slotLabel": "Perseguição 2",
+      "name": "Estilo Inferno: Controle de Chamas",
+      "chaseTriggers": [
+        "popup"
+      ],
+      "chaseTriggerLabels": [
+        "Flutuação baixa"
+      ],
+      "causesChaseStates": [
+        "fall"
+      ],
+      "causesChaseStateLabels": [
+        "Queda"
+      ],
+      "appliedEffects": [
+        "Chamas"
+      ]
+    }
+  },
+  "passives": []
+}

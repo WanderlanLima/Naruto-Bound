@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "shinobi-combat-v1",
+  "characterId": "vdfno_100304",
+  "heroCode": "vdfno_100304",
+  "displayName": "Naruto Kurama",
+  "combatProfile": {
+    "heroCode": "vdfno_100304",
+    "name": "Naruto Kurama",
+    "combatRole": "dps",
+    "combatRoleLabel": "Dano",
+    "nature": "wind",
+    "natureLabel": "Vento",
+    "baseStats": {
+      "hp": 2117,
+      "attack": 535,
+      "defense": 119
+    },
+    "chaseComboSummary": {
+      "initiators": [
+        {
+          "slot": "attack",
+          "skillId": "vdfno_100304_atk",
+          "skillName": "Ataque da Kurama",
+          "causesStates": [
+            "back"
+          ],
+          "causesStateLabels": [
+            "Empurrão"
+          ],
+          "appliedEffects": [
+            "Chamas"
+          ]
+        },
+        {
+          "slot": "UniqueSkill",
+          "skillId": "vdfno_100304_ult",
+          "skillName": "Rasen Shuriken Planetário de Bijuu",
+          "causesStates": [
+            "back"
+          ],
+          "causesStateLabels": [
+            "Empurrão"
+          ],
+          "appliedEffects": [
+            "Chamas"
+          ]
+        }
+      ],
+      "chasers": [
+        {
+          "slot": "chase1",
+          "skillId": "vdfno_100304_chase1",
+          "skillName": "Super Mini Bomba Bijuu",
+          "requiresStates": [
+            "back"
+          ],
+          "requiresStateLabels": [
+            "Empurrão"
+          ],
+          "causesStates": [
+            "popup"
+          ],
+          "causesStateLabels": [
+            "Flutuação baixa"
+          ],
+          "appliedEffects": [
+            "Chamas"
+          ]
+        }
+      ]
+    }
+  },
+  "skills": {
+    "attack": {
+      "id": "vdfno_100304_atk",
+      "slotLabel": "Ataque Normal",
+      "name": "Ataque da Kurama",
+      "causesChaseStates": [
+        "back"
+      ],
+      "causesChaseStateLabels": [
+        "Empurrão"
+      ],
+      "appliedEffects": [
+        "Chamas"
+      ]
+    },
+    "skill": {
+      "id": "vdfno_100304_skl",
+      "slotLabel": "Habilidade",
+      "name": "Ataque da Kurama",
+      "causesChaseStates": [
+        "back"
+      ],
+      "causesChaseStateLabels": [
+        "Empurrão"
+      ],
+      "appliedEffects": [
+        "Chamas"
+      ]
+    },
+    "UniqueSkill": {
+      "id": "vdfno_100304_ult",
+      "slotLabel": "Ôgi (Ultimate)",
+      "name": "Rasen Shuriken Planetário de Bijuu",
+      "causesChaseStates": [
+        "back"
+      ],
+      "causesChaseStateLabels": [
+        "Empurrão"
+      ],
+      "appliedEffects": [
+        "Chamas"
+      ]
+    },
+    "chase1": {
+      "id": "vdfno_100304_chase1",
+      "slotLabel": "Perseguição 1",
+      "name": "Super Mini Bomba Bijuu",
+      "chaseTriggers": [
+        "back"
+      ],
+      "chaseTriggerLabels": [
+        "Empurrão"
+      ],
+      "causesChaseStates": [
+        "popup"
+      ],
+      "causesChaseStateLabels": [
+        "Flutuação baixa"
+      ],
+      "appliedEffects": [
+        "Chamas"
+      ]
+    }
+  },
+  "passives": []
+}
