@@ -38,7 +38,7 @@ function joinUrl(base: string, rel: string): string {
 
 async function fetchJsonSafe<T>(url: string): Promise<T | null> {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) return null;
     const ct = res.headers.get('content-type') || '';
     const text = await res.text();
