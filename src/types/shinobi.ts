@@ -108,6 +108,8 @@ export interface CompiledAnimation {
   durationMs: number;
   cellWidth: number;
   cellHeight: number;
+  /** Sheet width the frame rects were authored for (`meta.size.w`); the image may be smaller */
+  sheetWidth?: number;
   anchor: AnchorMetrics;
   hasExplicitAnchor: boolean;
   frames: SpriteFrameRect[];

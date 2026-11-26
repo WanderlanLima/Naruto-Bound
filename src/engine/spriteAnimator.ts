@@ -234,6 +234,7 @@ export function parseSpritesheetJson(
     durationMs,
     cellWidth,
     cellHeight,
+    sheetWidth: pageFiles.length <= 1 ? Number(meta.size?.w) || undefined : undefined,
     anchor,
     hasExplicitAnchor,
     frames,
@@ -310,6 +311,11 @@ export function buildGridCompiledAnimation(params: {
   };
 }
 
+/** Ratio between the loaded texture and the sheet size described by its JSON */
+export function getSheetScale(anim: CompiledAnimation, img: HTMLImageElement): number {
+  return anim.sheetWidth && img.naturalWidth > 0 ? img.naturalWidth / anim.sheetWidth : 1;
+}
+
 let probeCanvas: HTMLCanvasElement | null = null;
 let probeCtx: CanvasRenderingContext2D | null = null;
 
@@ -345,7 +351,8 @@ export function calibrateLegacyPivotFromImage(
       probeCanvas!.width = w;
       probeCanvas!.height = h;
       probeCtx!.clearRect(0, 0, w, h);
-      probeCtx!.drawImage(pageImg, frame.x, frame.y, frame.w, frame.h, 0, 0, w, h);
+      const k = getSheetScale(anim, pageImg);
+      probeCtx!.drawImage(pageImg, frame.x * k, frame.y * k, frame.w * k, frame.h * k, 0, 0, w, h);
 
       const data = probeCtx!.getImageData(0, 0, w, h).data;
       let minX = w;
@@ -499,6 +506,11 @@ export function drawCompiledAnimationFrame(params: {
   const destX = sss.x - pivotX;
   const destY = sss.y - pivotY;
 
+  // Source rects are scaled to the actual texture; destination geometry stays untouched
+  const k = getSheetScale(anim, pageImg);
+  const srcX = frame.x * k;
+  const srcY = frame.y * k;
+
   ctx.save();
   ctx.translate(worldX, worldY);
   ctx.scale(scaleX, scaleY);
@@ -519,10 +531,10 @@ export function drawCompiledAnimationFrame(params: {
         silCtx.save();
         silCtx.translate(0, sh);
         silCtx.rotate(-Math.PI / 2);
-        silCtx.drawImage(pageImg, frame.x, frame.y, frame.h, frame.w, 0, 0, frame.h, frame.w);
+        silCtx.drawImage(pageImg, srcX, srcY, frame.h * k, frame.w * k, 0, 0, frame.h, frame.w);
         silCtx.restore();
       } else {
-        silCtx.drawImage(pageImg, frame.x, frame.y, frame.w, frame.h, 0, 0, frame.w, frame.h);
+        silCtx.drawImage(pageImg, srcX, srcY, frame.w * k, frame.h * k, 0, 0, frame.w, frame.h);
       }
       silCtx.globalCompositeOperation = 'source-in';
       silCtx.fillStyle = silhouetteColor;
@@ -538,9 +550,9 @@ export function drawCompiledAnimationFrame(params: {
     // TexturePacker rotated 90deg CW in atlas -> rotate -90deg CCW when drawing
     ctx.translate(destX, destY + sss.h);
     ctx.rotate(-Math.PI / 2);
-    ctx.drawImage(pageImg, frame.x, frame.y, frame.h, frame.w, 0, 0, sss.h, sss.w);
+    ctx.drawImage(pageImg, srcX, srcY, frame.h * k, frame.w * k, 0, 0, sss.h, sss.w);
   } else {
-    ctx.drawImage(pageImg, frame.x, frame.y, frame.w, frame.h, destX, destY, sss.w, sss.h);
+    ctx.drawImage(pageImg, srcX, srcY, frame.w * k, frame.h * k, destX, destY, sss.w, sss.h);
   }
 
   ctx.restore();

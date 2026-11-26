@@ -247,6 +247,8 @@ export class ShinobiBattleEngine {
   private camFree = false;
   private moveDir: -1 | 0 | 1 = 0;
   private rotatedPortrait = false;
+  /** Phones fill far fewer pixels per frame with a lower canvas resolution cap */
+  private maxPixelRatio = window.matchMedia?.('(pointer: coarse)').matches ? 1.5 : 2;
 
   // Pointer gesture tracking
   private pointers = new Map<number, [number, number]>();
@@ -2013,7 +2015,7 @@ export class ShinobiBattleEngine {
   private render(): void {
     const W = Math.max(1, this.canvas.clientWidth);
     const H = Math.max(1, this.canvas.clientHeight);
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(this.maxPixelRatio, window.devicePixelRatio || 1);
     const cw = Math.round(W * dpr);
     const ch = Math.round(H * dpr);
     if (this.canvas.width !== cw || this.canvas.height !== ch) {

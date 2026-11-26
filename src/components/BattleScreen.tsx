@@ -200,7 +200,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     >
       {/* Zone 1: Top HUD Strip */}
       {ui && (
-        <header className="z-20 flex shrink-0 items-center justify-between gap-2 border-b border-slate-800/90 bg-[#080D1B]/95 px-2.5 py-1.5 backdrop-blur-sm md:px-4 md:py-2">
+        <header className="z-20 flex shrink-0 items-center justify-between gap-2 border-b border-slate-800/90 bg-[#080D1B]/95 px-2.5 py-1.5 md:px-4 md:py-2">
           {/* Left: Exit + Player 1 HUD */}
           <div className="flex min-w-0 items-center gap-2">
             <button
