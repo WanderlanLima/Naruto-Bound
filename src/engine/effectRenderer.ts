@@ -261,7 +261,13 @@ function drawLegacySpineEffect(
     if (!pageImg || !pageImg.complete || pageImg.naturalWidth === 0) continue;
 
     let slotCol = parseHexRgba(s.color);
-    if (sl.color) slotCol = sampleColorTimeline(sl.color, elapsedSec);
+    if (sl.color) {
+      slotCol = sampleColorTimeline(sl.color, elapsedSec);
+    } else if (sl.twoColor) {
+      // Two-color tint: only the light color (and its alpha) can be reproduced on a 2D canvas
+      const light = sl.twoColor._light || (sl.twoColor._light = sl.twoColor.map((k: any) => ({ ...k, color: k.light })));
+      slotCol = sampleColorTimeline(light, elapsedSec);
+    }
     const attCol = parseHexRgba(att.color);
     const r = slotCol[0] * attCol[0];
     const g = slotCol[1] * attCol[1];

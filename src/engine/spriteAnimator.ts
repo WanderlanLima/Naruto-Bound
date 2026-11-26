@@ -224,6 +224,7 @@ export function parseSpritesheetJson(
     pivotPxX,
     pivotPxY,
     worldToPixelScale,
+    cameraHeadroomPx: Number(rawAnchor?.cameraHeadroomPx) || undefined,
   };
 
   return {
@@ -232,6 +233,7 @@ export function parseSpritesheetJson(
     fps,
     frameCount,
     durationMs,
+    impactMs: Array.isArray(meta.impactMs) ? meta.impactMs.map(Number) : undefined,
     cellWidth,
     cellHeight,
     sheetWidth: pageFiles.length <= 1 ? Number(meta.size?.w) || undefined : undefined,

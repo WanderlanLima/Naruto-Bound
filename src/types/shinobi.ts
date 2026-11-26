@@ -41,6 +41,8 @@ export interface AnchorMetrics {
   pivotPxY: number;
   worldToPixelScale: number;
   computedFromOpaque?: boolean;
+  /** Sheet pixels above the feet that must stay on screen (high jumps); the camera zooms out to fit */
+  cameraHeadroomPx?: number;
 }
 
 export interface AnimationHitEvent {
@@ -110,6 +112,8 @@ export interface CompiledAnimation {
   cellHeight: number;
   /** Sheet width the frame rects were authored for (`meta.size.w`); the image may be smaller */
   sheetWidth?: number;
+  /** Moments (ms) when the attack drawn in the spritesheet connects */
+  impactMs?: number[];
   anchor: AnchorMetrics;
   hasExplicitAnchor: boolean;
   frames: SpriteFrameRect[];
@@ -164,6 +168,8 @@ export interface GameCharacterManifest {
   width: number;
   height: number;
   fps: number;
+  /** Body height in idle-sheet pixels; set it when the idle pose has an aura around the ninja */
+  referenceHeightPx?: number;
   facing: 'right' | 'left';
   roles: GameCharacterRoles;
   roleToOriginalAnim?: Record<string, unknown>;

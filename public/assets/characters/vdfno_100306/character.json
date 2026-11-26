@@ -6,6 +6,7 @@
   "width": 160,
   "height": 245,
   "fps": 24,
+  "referenceHeightPx": 153,
   "facing": "right",
   "roles": {
     "skills": [

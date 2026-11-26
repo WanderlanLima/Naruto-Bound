@@ -326,7 +326,9 @@ export async function loadFullRoster(
 /* ---------- On-Demand Battle Runtime Loader ---------- */
 
 function computeCharacterScaleFromIdle(
-  idleAnim: CompiledAnimation | undefined
+  idleAnim: CompiledAnimation | undefined,
+  /** Body height in sheet pixels, for idles whose aura makes the opaque bounds taller than the ninja */
+  referenceHeightPx?: number
 ): { charWorldScale: number; bodyHeight: number; bodyWidth: number } {
   if (!idleAnim) {
     return { charWorldScale: 0.5, bodyHeight: TARGET_BATTLE_BODY_H, bodyWidth: 56 };
@@ -334,7 +336,7 @@ function computeCharacterScaleFromIdle(
   const metrics = calibrateLegacyPivotFromImage(idleAnim);
   const idleWorldScale = Math.max(0.05, idleAnim.anchor.worldToPixelScale || 1);
   // Visible character height in Spine world units
-  const visibleWorldH = Math.max(40, metrics.visibleHeight / idleWorldScale);
+  const visibleWorldH = Math.max(40, (referenceHeightPx || metrics.visibleHeight) / idleWorldScale);
   const charWorldScale = TARGET_BATTLE_BODY_H / visibleWorldH;
   const bodyWidth = Math.max(36, Math.min(96, (metrics.visibleWidth / idleWorldScale) * charWorldScale));
   return {
@@ -586,11 +588,11 @@ async function loadRepoRuntime(
           imgByName.set(imgRel.replace(/^.*\//, '').toLowerCase(), imgRel);
         }
         const pages: HTMLImageElement[] = [];
-        for (const pageName of parsed.pageNames) {
+        for (const [pageIdx, pageName] of parsed.pageNames.entries()) {
           const matchedRel = imgByName.get(pageName.replace(/^.*\//, '').toLowerCase());
           if (!matchedRel) continue;
           try {
-            pages.push(await loadImageElement(joinUrl(charBase, matchedRel)));
+            pages[pageIdx] = await loadImageElement(joinUrl(charBase, matchedRel));
           } catch {
             // ignore missing page
           }
@@ -635,7 +637,10 @@ async function loadRepoRuntime(
   const animSlugs = Array.from(animations.keys());
   const normalizedRoles = normalizeCharacterRoles(manifest.roles, animSlugs);
   const idleAnim = animations.get(normalizedRoles.idle || 'idle') || animations.values().next().value;
-  const { charWorldScale, bodyHeight, bodyWidth } = computeCharacterScaleFromIdle(idleAnim);
+  const { charWorldScale, bodyHeight, bodyWidth } = computeCharacterScaleFromIdle(
+    idleAnim,
+    manifest.referenceHeightPx
+  );
 
   return {
     entry,
@@ -960,7 +965,7 @@ async function loadImportedLegacyRuntime(
       if (!parsed) continue;
 
       const pages: HTMLImageElement[] = [];
-      for (const pageFile of parsed.pageNames) {
+      for (const [pageIdx, pageFile] of parsed.pageNames.entries()) {
         const matchedRel =
           bucket.imageRels.get(pageFile.toLowerCase()) ||
           bucket.imageRels.get(pageFile.replace(/^.*\//, '').toLowerCase());
@@ -968,7 +973,7 @@ async function loadImportedLegacyRuntime(
         const imgBlob = await readBlobByRel(matchedRel);
         if (!imgBlob) continue;
         const img = await loadImageElement(matchPool.create(imgBlob)).catch(() => null);
-        if (img) pages.push(img);
+        if (img) pages[pageIdx] = img;
       }
       if (pages.length === 0) continue;
       parsed.data.pages = pages;
@@ -1062,6 +1067,8 @@ function parseRawSpineAtlasAndJson(
       continue;
     }
     if (!raw.startsWith(' ') && !raw.startsWith('\t')) {
+      // Page attributes ("size:", "format:", "filter:", "repeat:") are not indented either
+      if (/^(size|format|filter|repeat|pma|scale)\s*:/i.test(trimmed)) continue;
       const next = (lines[i + 1] || '').trim().toLowerCase();
       if (
         next.startsWith('size:') ||

@@ -245,6 +245,10 @@ export class ShinobiBattleEngine {
 
   private cam = { x: 400, y: 400, z: 1.0 };
   private camFree = false;
+  /** World pixels the camera may currently show above the top of the map */
+  private camSkyPx = 0;
+  /** Zoom to restore once a high-jump animation ends */
+  private camZoomBeforeJump: number | null = null;
   private moveDir: -1 | 0 | 1 = 0;
   private rotatedPortrait = false;
   /** Phones fill far fewer pixels per frame with a lower canvas resolution cap */
@@ -644,7 +648,8 @@ export class ShinobiBattleEngine {
     let strikeCtx: TimelineStrikeContext | undefined;
     if (options?.strike) {
       // Determine real impact timestamps from eventsMs.hits, or smart fallback
-      let hitTimestampsMs = events.hits.map((h) => h.timeMs);
+      // `impactMs` marks hits that are baked into the ninja's own spritesheet
+      let hitTimestampsMs = anim?.impactMs?.slice() || events.hits.map((h) => h.timeMs);
       if (hitTimestampsMs.length === 0) {
         const maxParticleMs =
           events.particles.length > 0
@@ -726,7 +731,9 @@ export class ShinobiBattleEngine {
         }
       }
     }
-    return Math.max(0.5, Math.min(2.6, maxMs / 1000));
+    // Trailing effects are capped, but the ninja's own animation always plays to the end
+    const capSec = Math.max(2.6, (anim?.durationMs || 0) / 1000);
+    return Math.max(0.5, Math.min(capSec, maxMs / 1000));
   }
 
   private lookupEffectSheet(
@@ -1999,7 +2006,33 @@ export class ShinobiBattleEngine {
       camTarget = { x: w.x, y: w.y - 85 };
     }
 
-    if (!this.camFree || this.phase === 'fly' || Boolean(this.dash)) {
+    // Animations with high jumps zoom out so the ninja never leaves the screen
+    const jumper = this.fighters.find(
+      (f) => f.hp > 0 && this.getFighterAnim(f)?.anchor.cameraHeadroomPx
+    );
+    let skyTarget = 0;
+    if (jumper) {
+      const anchor = this.getFighterAnim(jumper)!.anchor;
+      const headroom =
+        (anchor.cameraHeadroomPx! * jumper.runtime.charWorldScale) /
+        Math.max(0.05, anchor.worldToPixelScale || 1);
+      const viewTop = jumper.y - headroom;
+      const viewBottom = jumper.y + 75;
+      if (this.camZoomBeforeJump === null) this.camZoomBeforeJump = this.cam.z;
+      const fitZ = Math.max(minZ, Math.min(this.camZoomBeforeJump, H / (viewBottom - viewTop)));
+      this.cam.z += (fitZ - this.cam.z) * Math.min(1, dt * 7);
+      camTarget = { x: jumper.x, y: viewBottom - H / 2 / fitZ };
+      skyTarget = Math.max(0, -(viewBottom - H / fitZ));
+    } else if (this.camZoomBeforeJump !== null) {
+      this.cam.z += (this.camZoomBeforeJump - this.cam.z) * Math.min(1, dt * 4.5);
+      if (Math.abs(this.camZoomBeforeJump - this.cam.z) < 0.01) {
+        this.cam.z = this.camZoomBeforeJump;
+        this.camZoomBeforeJump = null;
+      }
+    }
+    this.camSkyPx += (skyTarget - this.camSkyPx) * Math.min(1, dt * (jumper ? 9 : 4.5));
+
+    if (!this.camFree || this.phase === 'fly' || Boolean(this.dash) || jumper) {
       const lerpRate = Math.min(1, dt * (this.phase === 'fly' ? 9 : 4.5));
       this.cam.x += (camTarget.x - this.cam.x) * lerpRate;
       this.cam.y += (camTarget.y - this.cam.y) * lerpRate;
@@ -2007,7 +2040,10 @@ export class ShinobiBattleEngine {
 
     this.cam.z = Math.min(2.6, Math.max(minZ, this.cam.z));
     this.cam.x = Math.min(WORLD_W - W / 2 / this.cam.z, Math.max(W / 2 / this.cam.z, this.cam.x));
-    this.cam.y = Math.min(WORLD_H - H / 2 / this.cam.z, Math.max(H / 2 / this.cam.z, this.cam.y));
+    this.cam.y = Math.min(
+      WORLD_H - H / 2 / this.cam.z,
+      Math.max(H / 2 / this.cam.z - this.camSkyPx, this.cam.y)
+    );
   }
 
   /* ---------- Canvas Rendering ---------- */
