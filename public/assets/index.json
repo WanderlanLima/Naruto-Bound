@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "shinobi-phaser-index-v1",
+  "totalCharacters": 2,
+  "characters": [
+    {
+      "id": "vdfno_100304",
+      "name": "Naruto Kurama",
+      "path": "characters/vdfno_100304",
+      "characterJson": "characters/vdfno_100304/character.json"
+    },
+    {
+      "id": "vdfno_100306",
+      "name": "Sasuke [Susano’o]",
+      "path": "characters/vdfno_100306",
+      "characterJson": "characters/vdfno_100306/character.json"
+    }
+  ]
+}
