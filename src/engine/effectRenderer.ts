@@ -7,7 +7,7 @@ export interface ActiveEffectInstance {
   layer: 'behind' | 'front';
   /** Attached target or static world coordinates */
   anchorMode: 'attacker' | 'target' | 'world';
-  fighterIndex?: 0 | 1;
+  fighterIndex?: number;
   worldX: number;
   worldY: number;
   dir: 1 | -1;
@@ -321,7 +321,7 @@ export function drawActiveEffectsLayer(
   effects: ActiveEffectInstance[],
   layer: 'behind' | 'front',
   nowMs: number,
-  getFighterPos: (index: 0 | 1) => { x: number; y: number; dir: 1 | -1 } | null
+  getFighterPos: (index: number) => { x: number; y: number; dir: 1 | -1 } | null
 ): void {
   for (const eff of effects) {
     if (eff.layer !== layer) continue;

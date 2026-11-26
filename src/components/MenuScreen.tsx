@@ -1,16 +1,20 @@
 import React, { useMemo } from 'react';
 import { Swords, Users, Upload, ChevronRight } from 'lucide-react';
-import type { GameMode, NinjaRosterEntry } from '../types/shinobi';
+import type { GameMode, NinjaRosterEntry, TeamSize } from '../types/shinobi';
 import { SpritePreview } from './SpritePreview';
 
 interface MenuScreenProps {
   roster: NinjaRosterEntry[];
+  teamSize: TeamSize;
+  onChangeTeamSize: (size: TeamSize) => void;
   onStartMode: (mode: GameMode) => void;
   onOpenImport: () => void;
 }
 
 export const MenuScreen: React.FC<MenuScreenProps> = ({
   roster,
+  teamSize,
+  onChangeTeamSize,
   onStartMode,
   onOpenImport,
 }) => {
@@ -97,6 +101,28 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
 
         {/* Right Primary Actions */}
         <div className="flex w-full shrink-0 flex-col gap-3 md:w-[340px]">
+          <div
+            className="grid grid-cols-2 gap-1 rounded-xl border border-slate-700/90 bg-[#0F162D]/90 p-1"
+            role="group"
+            aria-label="Formato da batalha"
+          >
+            {([1, 3] as const).map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => onChangeTeamSize(size)}
+                aria-pressed={teamSize === size}
+                className={`min-h-[40px] rounded-lg text-sm font-bold transition-colors ${
+                  teamSize === size
+                    ? 'bg-amber-400 text-slate-950'
+                    : 'text-slate-300 hover:bg-slate-800'
+                }`}
+              >
+                {size === 1 ? 'Duelo 1x1' : 'Equipes 3x3'}
+              </button>
+            ))}
+          </div>
+
           <button
             type="button"
             onClick={() => onStartMode('ia')}
@@ -107,7 +133,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
               <div>
                 <div className="text-base font-bold leading-tight">Player vs IA</div>
                 <div className="text-xs font-medium text-slate-900/80">
-                  Batalha tática contra oponente controlado por IA
+                  {teamSize === 3
+                    ? 'Monte seu trio; a IA escolhe os 3 ninjas dela'
+                    : 'Batalha tática contra oponente controlado por IA'}
                 </div>
               </div>
             </div>
@@ -124,7 +152,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
               <div>
                 <div className="text-base font-semibold leading-tight">Player vs Player Local</div>
                 <div className="text-xs text-slate-400">
-                  Dois jogadores no mesmo dispositivo por turnos
+                  {teamSize === 3
+                    ? 'Cada jogador monta um trio no mesmo dispositivo'
+                    : 'Dois jogadores no mesmo dispositivo por turnos'}
                 </div>
               </div>
             </div>

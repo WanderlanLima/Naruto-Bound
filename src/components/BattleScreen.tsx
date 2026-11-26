@@ -26,7 +26,7 @@ import {
 } from '../utils/viewportOrientation';
 
 interface BattleScreenProps {
-  runtimes: [LoadedNinjaRuntime, LoadedNinjaRuntime];
+  teams: [LoadedNinjaRuntime[], LoadedNinjaRuntime[]];
   mode: GameMode;
   onRematch: () => void;
   onChangeNinjas: () => void;
@@ -34,7 +34,7 @@ interface BattleScreenProps {
 }
 
 export const BattleScreen: React.FC<BattleScreenProps> = ({
-  runtimes,
+  teams,
   mode,
   onRematch,
   onChangeNinjas,
@@ -88,7 +88,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
     const engine = new ShinobiBattleEngine({
       canvas,
-      runtimes,
+      teams,
       mode,
       onUiUpdate: (snap) => setUi(snap),
     });
@@ -104,7 +104,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       engine.dispose();
       engineRef.current = null;
     };
-  }, [runtimes, mode]);
+  }, [teams, mode]);
 
   useEffect(() => {
     const engine = engineRef.current;
@@ -157,7 +157,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
   const activeFighter = ui ? ui.fighters[ui.turnIndex] : null;
   const canPlayerAct = Boolean(
-    ui && ui.phase === 'aim' && !(mode === 'ia' && ui.turnIndex === 1)
+    ui && ui.phase === 'aim' && !(mode === 'ia' && ui.activeTeam === 1)
   );
   const ultReady = Boolean(
     activeFighter && activeFighter.chakra >= 100 && activeFighter.statuses.seal === 0
@@ -179,10 +179,6 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     const arrows = (w > 0 ? '▶' : '◀').repeat(Math.min(5, Math.ceil(Math.abs(w) / 2)));
     return `Vento ${arrows} ${Math.abs(w).toFixed(1)}`;
   })();
-
-  const turnQueue: Array<0 | 1> = ui
-    ? [ui.turnIndex, (1 - ui.turnIndex) as 0 | 1, ui.turnIndex]
-    : [0, 1, 0];
 
   const rotatedLandscapeStyle: React.CSSProperties | undefined = isPortrait
     ? {
@@ -217,7 +213,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
               <LogOut className="h-4 w-4" />
             </button>
 
-            <FighterTopBar fighter={ui.fighters[0]} active={ui.turnIndex === 0} align="left" />
+            <TeamHud ui={ui} team={0} />
           </div>
 
           {/* Center: Round, Utilities & Wind */}
@@ -270,7 +266,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           </div>
 
           {/* Right: Player 2 / Enemy HUD */}
-          <FighterTopBar fighter={ui.fighters[1]} active={ui.turnIndex === 1} align="right" />
+          <TeamHud ui={ui} team={1} />
         </header>
       )}
 
@@ -317,7 +313,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           {/* Left: Turn Queue + Movement Controls */}
           <div className="flex shrink-0 items-center gap-2.5">
             <div className="hidden items-center gap-1 pr-1 md:flex" aria-label="Ordem de turnos">
-              {turnQueue.map((idx, j) => {
+              {ui.turnQueue.map((idx, j) => {
                 const f = ui.fighters[idx];
                 const isCur = j === 0;
                 return (
@@ -529,26 +525,38 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       {/* Game Over / Victory Modal */}
       {ui?.phase === 'over' && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-slate-700 bg-[#121931] p-5 text-center shadow-2xl">
+          <div className="max-h-full w-full max-w-md overflow-y-auto rounded-xl border border-slate-700 bg-[#121931] p-5 text-center shadow-2xl">
             <p className="text-xs font-semibold text-amber-300">Fim da Batalha</p>
             <h2 className="font-display mt-1 text-3xl font-black uppercase text-white md:text-4xl">
-              {ui.winnerIndex === -1
+              {ui.winnerTeam === -1
                 ? 'Empate!'
-                : `${ui.fighters[ui.winnerIndex ?? 0].name.split(' ')[0]} Venceu!`}
+                : ui.teamSize === 1
+                  ? `${ui.fighters[ui.winnerTeam ?? 0].name.split(' ')[0]} Venceu!`
+                  : mode === 'ia'
+                    ? ui.winnerTeam === 0
+                      ? 'Seu time venceu!'
+                      : 'A IA venceu!'
+                    : `Time ${(ui.winnerTeam ?? 0) + 1} venceu!`}
             </h2>
 
             <div className="mt-3 grid grid-cols-2 gap-3 text-left text-xs">
-              {ui.fighters.map((f, idx) => (
-                <div key={f.id + idx} className="rounded-lg bg-slate-900/80 p-3">
-                  <div className="truncate font-semibold text-slate-100">
-                    {f.name.split(' ')[0]}
-                  </div>
-                  <div className="font-mono-num mt-1 text-slate-400">
-                    Dano total: <span className="text-amber-300">{f.totalDamage}</span>
-                  </div>
-                  <div className="font-mono-num text-slate-400">
-                    Maior golpe: <span className="text-slate-200">{f.biggestHit}</span>
-                  </div>
+              {([0, 1] as const).map((team) => (
+                <div key={team} className="min-w-0 space-y-2">
+                  {ui.fighters
+                    .filter((f) => f.team === team)
+                    .map((f) => (
+                      <div key={f.index} className="rounded-lg bg-slate-900/80 p-2">
+                        <div className="truncate font-semibold text-slate-100">
+                          {f.name.split(' ')[0]}
+                          {f.hp <= 0 && <span className="ml-1 text-rose-400">(caiu)</span>}
+                        </div>
+                        <div className="font-mono-num text-slate-400">
+                          Dano <span className="text-amber-300">{f.totalDamage}</span>
+                          <span aria-hidden="true" className="mx-1 text-slate-600">·</span>
+                          Maior <span className="text-slate-200">{f.biggestHit}</span>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               ))}
             </div>
@@ -584,8 +592,52 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   );
 };
 
+const TeamHud: React.FC<{ ui: BattleUiSnapshot; team: 0 | 1 }> = ({ ui, team }) => {
+  const focused = ui.fighters[ui.focus[team]];
+  const isRight = team === 1;
+  return (
+    <div className={`flex min-w-0 flex-col gap-1 ${isRight ? 'items-end' : 'items-start'}`}>
+      <FighterTopBar
+        fighter={focused}
+        active={ui.turnIndex === focused.index}
+        align={isRight ? 'right' : 'left'}
+      />
+      {ui.teamSize > 1 && (
+        <div className={`flex gap-1.5 ${isRight ? 'flex-row-reverse' : ''}`}>
+          {ui.fighters
+            .filter((f) => f.team === team)
+            .map((f) => (
+              <div
+                key={f.index}
+                className={`w-11 ${f.hp <= 0 ? 'opacity-40 grayscale' : ''}`}
+                title={`${f.name} · ${f.hp}/${f.maxHp}`}
+              >
+                <div
+                  className={`h-6 w-11 rounded border bg-slate-900 bg-cover bg-top ${
+                    f.index === ui.turnIndex
+                      ? 'border-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.75)]'
+                      : isRight
+                        ? 'border-rose-500/60'
+                        : 'border-sky-500/60'
+                  }`}
+                  style={f.faceUrl ? { backgroundImage: `url(${f.faceUrl})` } : undefined}
+                />
+                <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className={`h-full ${isRight ? 'bg-rose-400' : 'bg-emerald-400'}`}
+                    style={{ width: `${(f.hp / Math.max(1, f.maxHp)) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface FighterTopBarProps {
-  fighter: BattleUiSnapshot['fighters'][0];
+  fighter: BattleUiSnapshot['fighters'][number];
   active: boolean;
   align: 'left' | 'right';
 }

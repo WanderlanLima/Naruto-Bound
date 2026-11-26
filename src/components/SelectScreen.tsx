@@ -1,31 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, Loader2, Upload } from 'lucide-react';
 import { CHASE_STATE_LABELS, NATURE_COLORS } from '../engine/combatParser';
-import type { GameMode, NinjaRosterEntry } from '../types/shinobi';
+import { maxCopiesPerTeam, pickAiTeam } from '../engine/teamPicker';
+import type { GameMode, NinjaRosterEntry, TeamSize } from '../types/shinobi';
 import { SpritePreview } from './SpritePreview';
 
 interface SelectScreenProps {
   roster: NinjaRosterEntry[];
   mode: GameMode;
+  teamSize: TeamSize;
   loadingMatch: boolean;
   loadError: string | null;
   onBackToMenu: () => void;
   onOpenImport: () => void;
-  onConfirmPair: (pair: [NinjaRosterEntry, NinjaRosterEntry]) => void;
+  onConfirmTeams: (teams: [NinjaRosterEntry[], NinjaRosterEntry[]]) => void;
 }
 
 export const SelectScreen: React.FC<SelectScreenProps> = ({
   roster,
   mode,
+  teamSize,
   loadingMatch,
   loadError,
   onBackToMenu,
   onOpenImport,
-  onConfirmPair,
+  onConfirmTeams,
 }) => {
   const [step, setStep] = useState<0 | 1>(0);
-  const [firstPick, setFirstPick] = useState<NinjaRosterEntry | null>(null);
+  const [firstTeam, setFirstTeam] = useState<NinjaRosterEntry[]>([]);
+  const [picks, setPicks] = useState<NinjaRosterEntry[]>([]);
   const [selected, setSelected] = useState<NinjaRosterEntry | null>(() => roster[0] || null);
+
+  const isSquad = teamSize > 1;
+  /** In squad vs IA the player only builds their own team */
+  const aiBuildsTeam = isSquad && mode === 'ia';
+  const maxCopies = maxCopiesPerTeam(roster.length, teamSize);
+  const teamFull = picks.length >= teamSize;
+  const copiesOfSelected = picks.filter((n) => n.id === selected?.id).length;
+  const canAdd = Boolean(selected && !teamFull && copiesOfSelected < maxCopies);
 
   useEffect(() => {
     if (!selected && roster.length > 0) {
@@ -35,37 +47,79 @@ export const SelectScreen: React.FC<SelectScreenProps> = ({
     }
   }, [roster, selected]);
 
-  const stepTitle =
-    mode === 'ia'
+  const playerLabel = step === 0 ? 'Jogador 1' : 'Jogador 2';
+  const stepTitle = isSquad
+    ? mode === 'ia'
+      ? `Monte seu time (${picks.length}/${teamSize})`
+      : `${playerLabel}: monte seu time (${picks.length}/${teamSize})`
+    : mode === 'ia'
       ? step === 0
         ? 'Escolha seu ninja'
         : 'Escolha seu oponente (IA)'
-      : step === 0
-        ? 'Jogador 1: escolha seu ninja'
-        : 'Jogador 2: escolha seu ninja';
+      : `${playerLabel}: escolha seu ninja`;
 
   const handleBack = () => {
     if (loadingMatch) return;
     if (step === 1) {
       setStep(0);
-      setSelected(firstPick || roster[0] || null);
+      setPicks(isSquad ? firstTeam : []);
+      setSelected(firstTeam[0] || roster[0] || null);
     } else {
       onBackToMenu();
     }
   };
 
+  const removePick = (slot: number) => {
+    setPicks((prev) => prev.filter((_, i) => i !== slot));
+  };
+
+  const goToSecondPlayer = (team: NinjaRosterEntry[]) => {
+    setFirstTeam(team);
+    setPicks([]);
+    setStep(1);
+  };
+
   const handleConfirm = () => {
-    if (!selected || loadingMatch) return;
+    if (loadingMatch) return;
+
+    if (isSquad) {
+      if (!teamFull) {
+        if (canAdd && selected) setPicks([...picks, selected]);
+        return;
+      }
+      if (aiBuildsTeam) {
+        onConfirmTeams([picks, pickAiTeam(roster, teamSize)]);
+      } else if (step === 0) {
+        goToSecondPlayer(picks);
+      } else {
+        onConfirmTeams([firstTeam, picks]);
+      }
+      return;
+    }
+
+    if (!selected) return;
     if (step === 0) {
-      setFirstPick(selected);
-      setStep(1);
+      goToSecondPlayer([selected]);
       // Pre-select a different ninja for the opponent if available
       const other = roster.find((n) => n.id !== selected.id) || selected;
       setSelected(other);
-    } else if (firstPick) {
-      onConfirmPair([firstPick, selected]);
+    } else {
+      onConfirmTeams([firstTeam, [selected]]);
     }
   };
+
+  const confirmLabel = isSquad
+    ? !teamFull
+      ? canAdd
+        ? `Adicionar ao time (${picks.length + 1}/${teamSize})`
+        : 'Escolha outro ninja'
+      : aiBuildsTeam || step === 1
+        ? 'Iniciar Batalha 3x3'
+        : 'Confirmar time do Jogador 1'
+    : step === 1
+      ? 'Iniciar Batalha'
+      : 'Confirmar Jogador 1';
+  const confirmDisabled = loadingMatch || (isSquad ? !teamFull && !canAdd : !selected);
 
   const accent = selected ? NATURE_COLORS[selected.combat.nature] || '#F59E0B' : '#F59E0B';
 
@@ -97,10 +151,16 @@ export const SelectScreen: React.FC<SelectScreenProps> = ({
             <h1 className="font-display text-xl font-bold tracking-wide text-amber-300 md:text-2xl">
               {stepTitle}
             </h1>
-            {step === 1 && firstPick && (
+            {step === 1 && firstTeam.length > 0 && (
               <p className="text-xs text-slate-400">
-                Jogador 1 confirmado: <span className="font-semibold text-slate-200">{firstPick.name}</span>
+                Jogador 1 confirmado:{' '}
+                <span className="font-semibold text-slate-200">
+                  {firstTeam.map((n) => n.name.split(' ')[0]).join(', ')}
+                </span>
               </p>
+            )}
+            {aiBuildsTeam && (
+              <p className="text-xs text-slate-400">A IA escolhe o time dela ao iniciar</p>
             )}
           </div>
         </div>
@@ -248,7 +308,8 @@ export const SelectScreen: React.FC<SelectScreenProps> = ({
           <div className="grid max-h-[240px] grid-cols-3 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-4 md:max-h-none md:flex-1 md:grid-cols-3 md:content-start">
             {roster.map((n) => {
               const isSelected = selected?.id === n.id;
-              const isFirst = step === 1 && firstPick?.id === n.id;
+              const isFirst = !isSquad && step === 1 && firstTeam[0]?.id === n.id;
+              const pickedCount = picks.filter((p) => p.id === n.id).length;
               return (
                 <button
                   key={n.id}
@@ -273,6 +334,11 @@ export const SelectScreen: React.FC<SelectScreenProps> = ({
                       {n.name.slice(0, 2).toUpperCase()}
                     </div>
                   )}
+                  {isSquad && pickedCount > 0 && (
+                    <span className="absolute right-1 top-1 rounded bg-amber-400 px-1.5 text-[10px] font-extrabold text-slate-950">
+                      {pickedCount > 1 ? `×${pickedCount}` : 'NO TIME'}
+                    </span>
+                  )}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-1.5 pb-1.5 pt-5">
                     <div className="truncate text-[11px] font-bold leading-tight text-white">
                       {n.name.split(' ')[0]}
@@ -292,9 +358,58 @@ export const SelectScreen: React.FC<SelectScreenProps> = ({
             </div>
           )}
 
+          {isSquad && (
+            <div className="shrink-0">
+              <div className="grid grid-cols-3 gap-2">
+                {Array.from({ length: teamSize }, (_, slot) => {
+                  const pick = picks[slot];
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      disabled={!pick || loadingMatch}
+                      onClick={() => removePick(slot)}
+                      aria-label={pick ? `Remover ${pick.name} do time` : `Vaga ${slot + 1} vazia`}
+                      className={`flex h-14 min-w-0 items-center gap-1.5 rounded-lg border px-1.5 text-left ${
+                        pick
+                          ? 'border-amber-400/70 bg-slate-900 hover:border-rose-400'
+                          : 'justify-center border-dashed border-slate-700 bg-slate-900/50'
+                      }`}
+                    >
+                      {pick ? (
+                        <>
+                          {pick.previewFaceUrl && (
+                            <img
+                              src={pick.previewFaceUrl}
+                              alt=""
+                              referrerPolicy="no-referrer"
+                              className="h-9 w-9 shrink-0 rounded-md object-cover object-top"
+                            />
+                          )}
+                          <span className="min-w-0">
+                            <span className="block truncate text-[11px] font-bold text-white">
+                              {pick.name.split(' ')[0]}
+                            </span>
+                            <span className="block text-[9px] text-slate-400">✕ remover</span>
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-500">{slot + 1}º ninja</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-[10.5px] leading-snug text-slate-400">
+                A ordem define os turnos e a prioridade na perseguição.
+                {maxCopies > 1 ? ' Há poucos ninjas, então é permitido repetir.' : ''}
+              </p>
+            </div>
+          )}
+
           <button
             type="button"
-            disabled={!selected || loadingMatch}
+            disabled={confirmDisabled}
             onClick={handleConfirm}
             className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-amber-950/40 transition-colors hover:from-amber-400 hover:to-orange-400 disabled:cursor-not-allowed disabled:opacity-45"
           >
@@ -304,7 +419,7 @@ export const SelectScreen: React.FC<SelectScreenProps> = ({
                 <span>Carregando sprites e efeitos...</span>
               </>
             ) : (
-              <span>{step === 1 ? 'Iniciar Batalha' : 'Confirmar Jogador 1'}</span>
+              <span>{confirmLabel}</span>
             )}
           </button>
         </aside>

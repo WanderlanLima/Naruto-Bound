@@ -426,10 +426,13 @@ export interface LoadedNinjaRuntime {
 }
 
 export type GameMode = 'ia' | 'local';
+export type TeamSize = 1 | 3;
 export type GameScreen = 'menu' | 'select' | 'battle';
 export type ActionChoice = 'attack' | 'skill' | 'ultimate';
 
 export interface FighterHudState {
+  index: number;
+  team: 0 | 1;
   id: string;
   name: string;
   faceUrl?: string;
@@ -456,7 +459,14 @@ export interface FighterHudState {
 }
 
 export interface BattleUiSnapshot {
-  turnIndex: 0 | 1;
+  /** Index in `fighters` of the ninja that owns the turn */
+  turnIndex: number;
+  activeTeam: 0 | 1;
+  teamSize: number;
+  /** Fighter shown in each side's main HUD bar */
+  focus: [number, number];
+  /** Fighter indexes of the current and next turns */
+  turnQueue: number[];
   phase: 'aim' | 'ai' | 'fly' | 'after' | 'over';
   round: number;
   maxRounds: number;
@@ -479,7 +489,8 @@ export interface BattleUiSnapshot {
     skillName: string;
     ninjaName: string;
   } | null;
-  fighters: [FighterHudState, FighterHudState];
-  winnerIndex: -1 | 0 | 1 | null;
+  /** Team 0 first, then team 1, each in lineup order */
+  fighters: FighterHudState[];
+  winnerTeam: -1 | 0 | 1 | null;
   moveRemainingRatio: number;
 }

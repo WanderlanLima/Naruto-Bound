@@ -14,16 +14,19 @@ import type {
   GameScreen,
   LoadedNinjaRuntime,
   NinjaRosterEntry,
+  TeamSize,
 } from './types/shinobi';
 import {
   enterBattleFullscreenLandscape,
   exitBattleFullscreenLandscape,
 } from './utils/viewportOrientation';
 
+type MatchRuntimes = [LoadedNinjaRuntime[], LoadedNinjaRuntime[]];
+
 export const App: React.FC = () => {
   const previewPoolRef = useRef<ObjectUrlPool>(new ObjectUrlPool());
   const rosterRef = useRef<NinjaRosterEntry[]>([]);
-  const activeRuntimesRef = useRef<[LoadedNinjaRuntime, LoadedNinjaRuntime] | null>(null);
+  const activeRuntimesRef = useRef<LoadedNinjaRuntime[]>([]);
 
   const [screen, setScreen] = useState<GameScreen>('menu');
   const [mode, setMode] = useState<GameMode>('ia');
@@ -33,19 +36,14 @@ export const App: React.FC = () => {
 
   const [loadingMatch, setLoadingMatch] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [matchPair, setMatchPair] = useState<[NinjaRosterEntry, NinjaRosterEntry] | null>(null);
-  const [matchRuntimes, setMatchRuntimes] = useState<[LoadedNinjaRuntime, LoadedNinjaRuntime] | null>(
-    null
-  );
+  const [teamSize, setTeamSize] = useState<TeamSize>(1);
+  const [matchTeams, setMatchTeams] = useState<MatchRuntimes | null>(null);
   const [matchKey, setMatchKey] = useState(0);
 
   const disposeActiveMatch = useCallback(() => {
-    if (activeRuntimesRef.current) {
-      activeRuntimesRef.current[0].dispose();
-      activeRuntimesRef.current[1].dispose();
-      activeRuntimesRef.current = null;
-    }
-    setMatchRuntimes(null);
+    activeRuntimesRef.current.forEach((r) => r.dispose());
+    activeRuntimesRef.current = [];
+    setMatchTeams(null);
   }, []);
 
   const refreshRoster = useCallback(async (overrideRepoUrl?: string) => {
@@ -79,19 +77,27 @@ export const App: React.FC = () => {
     setScreen('select');
   };
 
-  const handleConfirmPair = async (pair: [NinjaRosterEntry, NinjaRosterEntry]) => {
+  const handleConfirmTeams = async (teams: [NinjaRosterEntry[], NinjaRosterEntry[]]) => {
     void enterBattleFullscreenLandscape();
     setLoadingMatch(true);
     setLoadError(null);
     disposeActiveMatch();
     try {
-      const [r0, r1] = await Promise.all([
-        loadNinjaForBattle(pair[0]),
-        loadNinjaForBattle(pair[1]),
-      ]);
-      activeRuntimesRef.current = [r0, r1];
-      setMatchPair(pair);
-      setMatchRuntimes([r0, r1]);
+      // Repeated ninjas share one runtime, so each package is only loaded once
+      const unique = new Map<string, NinjaRosterEntry>();
+      for (const entry of [...teams[0], ...teams[1]]) unique.set(entry.id, entry);
+      const results = await Promise.allSettled(Array.from(unique.values(), loadNinjaForBattle));
+      const loaded = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+      const failed = results.find((r) => r.status === 'rejected');
+      if (failed) {
+        loaded.forEach((r) => r.dispose());
+        throw failed.reason;
+      }
+      const byId = new Map(loaded.map((r) => [r.entry.id, r]));
+      const toRuntimes = (team: NinjaRosterEntry[]) => team.map((n) => byId.get(n.id)!);
+
+      activeRuntimesRef.current = loaded;
+      setMatchTeams([toRuntimes(teams[0]), toRuntimes(teams[1])]);
       setMatchKey((k) => k + 1);
       setScreen('battle');
     } catch (err) {
@@ -106,7 +112,7 @@ export const App: React.FC = () => {
   };
 
   const handleRematch = () => {
-    if (matchPair && matchRuntimes) {
+    if (matchTeams) {
       void enterBattleFullscreenLandscape();
       setMatchKey((k) => k + 1);
     }
@@ -129,6 +135,8 @@ export const App: React.FC = () => {
       {screen === 'menu' && (
         <MenuScreen
           roster={roster}
+          teamSize={teamSize}
+          onChangeTeamSize={setTeamSize}
           onStartMode={handleStartMode}
           onOpenImport={() => setImportOpen(true)}
         />
@@ -138,18 +146,19 @@ export const App: React.FC = () => {
         <SelectScreen
           roster={roster}
           mode={mode}
+          teamSize={teamSize}
           loadingMatch={loadingMatch}
           loadError={loadError}
           onBackToMenu={() => setScreen('menu')}
           onOpenImport={() => setImportOpen(true)}
-          onConfirmPair={handleConfirmPair}
+          onConfirmTeams={handleConfirmTeams}
         />
       )}
 
-      {screen === 'battle' && matchRuntimes && (
+      {screen === 'battle' && matchTeams && (
         <BattleScreen
           key={matchKey}
-          runtimes={matchRuntimes}
+          teams={matchTeams}
           mode={mode}
           onRematch={handleRematch}
           onChangeNinjas={handleChangeNinjas}

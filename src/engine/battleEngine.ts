@@ -34,6 +34,10 @@ export const WORLD_H = 760;
 const GRAVITY = 720;
 const FIGHTER_GRAVITY = 940;
 const MAX_ROUNDS = 50;
+const MAX_ROUNDS_TEAM = 90;
+/** Safety cap for a single team chase chain (each chase skill still fires only once per chain) */
+const MAX_TEAM_CHAIN = 9;
+const SPAWN_MARGIN = 110;
 const TURN_TIME_SEC = 30;
 const MOVE_BUDGET = 190;
 
@@ -81,8 +85,8 @@ interface FloatingCallout {
 }
 
 interface TimelineStrikeContext {
-  attackerIdx: 0 | 1;
-  targetIdx: 0 | 1;
+  attackerIdx: number;
+  targetIdx: number;
   actionKind: 'attack' | 'skill' | 'ultimate' | 'chase';
   totalDamage: number;
   isBig: boolean;
@@ -104,9 +108,22 @@ interface ActiveTimeline {
   strike?: TimelineStrikeContext;
 }
 
+interface ReturnTrip {
+  idx: number;
+  fromX: number;
+  toX: number;
+  t: number;
+  dur: number;
+}
+
 interface DashSequence {
-  attackerIdx: 0 | 1;
-  targetIdx: 0 | 1;
+  /** Current striker: the turn owner at first, then whichever ally is chasing */
+  attackerIdx: number;
+  targetIdx: number;
+  /** Where each participant stood before joining the chain */
+  homes: Map<number, number>;
+  /** Allies running back home while the chain continues */
+  returns: ReturnTrip[];
   actionChoice: ActionChoice;
   phase: 'approach' | 'strike' | 'chaseWait' | 'chaseDash' | 'chaseStrike' | 'return';
   t: number;
@@ -116,17 +133,18 @@ interface DashSequence {
   waitDur: number;
   strikeElapsed: number;
   strikeDur: number;
-  xRet: number;
   xChaseStart: number;
   xChaseEnd: number;
   lastCausedState: ChaseState;
   activeChaser?: ChaseSkillSpec;
+  /** Keys are `${fighterIndex}:${slot}:${name}` so duplicated ninjas chase independently */
   usedChaserSlots: Set<string>;
   comboCount: number;
 }
 
 interface FighterEntity {
-  index: 0 | 1;
+  index: number;
+  team: 0 | 1;
   runtime: LoadedNinjaRuntime;
   x: number;
   y: number;
@@ -177,15 +195,22 @@ export class ShinobiBattleEngine {
 
   private mode: GameMode;
   private onUiUpdate: (snap: BattleUiSnapshot) => void;
-  private fighters: [FighterEntity, FighterEntity];
+  private fighters: FighterEntity[] = [];
+  private teamSize: number;
 
-  private turnIndex: 0 | 1 = 0;
+  /** Index (in `fighters`) of the ninja that owns the current turn */
+  private turnIndex = 0;
+  private activeTeam: 0 | 1 = 0;
+  /** Last team slot that acted, per team */
+  private turnCursor: [number, number] = [-1, -1];
+  /** Fighter highlighted on each side of the HUD */
+  private focus: [number, number] = [0, 1];
   private phase: 'aim' | 'ai' | 'fly' | 'after' | 'over' = 'aim';
   private round = 0;
   private timerSec = TURN_TIME_SEC;
   private wind = 0;
   private afterTimer = 0;
-  private winnerIndex: -1 | 0 | 1 | null = null;
+  private winnerTeam: -1 | 0 | 1 | null = null;
 
   private aim: { angle: number; power: number } | null = null;
   private aiPlan: { angle: number; power: number; delay: number } | null = null;
@@ -238,7 +263,7 @@ export class ShinobiBattleEngine {
 
   constructor(params: {
     canvas: HTMLCanvasElement;
-    runtimes: [LoadedNinjaRuntime, LoadedNinjaRuntime];
+    teams: [LoadedNinjaRuntime[], LoadedNinjaRuntime[]];
     mode: GameMode;
     onUiUpdate: (snap: BattleUiSnapshot) => void;
   }) {
@@ -259,10 +284,20 @@ export class ShinobiBattleEngine {
     this.nowMs = performance.now();
     this.lastNow = this.nowMs;
 
-    this.fighters = [
-      this.createFighter(0, params.runtimes[0], 320, 1),
-      this.createFighter(1, params.runtimes[1], WORLD_W - 320, -1),
+    this.teamSize = params.teams[0].length;
+    const lineup = [
+      ...params.teams[0].map((runtime) => ({ runtime, team: 0 as const })),
+      ...params.teams[1].map((runtime) => ({ runtime, team: 1 as const })),
     ];
+    const spawnXs = this.rollSpawnPositions(lineup.length);
+    this.fighters = lineup.map((l, i) =>
+      this.createFighter(i, l.team, l.runtime, spawnXs[i], l.team === 0 ? 1 : -1)
+    );
+    for (const f of this.fighters) {
+      const foe = this.nearestEnemy(f);
+      if (foe) f.dir = foe.x >= f.x ? 1 : -1;
+    }
+    this.focus = [0, this.teamSize];
 
     this.cam = {
       x: this.fighters[0].x + 80,
@@ -276,8 +311,63 @@ export class ShinobiBattleEngine {
     this.rafId = requestAnimationFrame(this.loop);
   }
 
+  /**
+   * 1x1 keeps the classic mirrored start. Team battles split the map into one lane per ninja
+   * and shuffle who gets which lane, so both squads land mixed without overlapping.
+   */
+  private rollSpawnPositions(count: number): number[] {
+    if (count <= 2) return [320, WORLD_W - 320];
+    const laneW = (WORLD_W - SPAWN_MARGIN * 2) / count;
+    const xs = Array.from({ length: count }, (_, i) =>
+      Math.round(SPAWN_MARGIN + laneW * (i + 0.5) + (Math.random() - 0.5) * laneW * 0.5)
+    );
+    for (let i = xs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [xs[i], xs[j]] = [xs[j], xs[i]];
+    }
+    return xs;
+  }
+
+  /* ---------- Team Helpers ---------- */
+
+  private livingEnemies(f: FighterEntity): FighterEntity[] {
+    return this.fighters.filter((o) => o.team !== f.team && o.hp > 0);
+  }
+
+  private nearestEnemy(f: FighterEntity): FighterEntity | undefined {
+    return this.livingEnemies(f).sort((a, b) => Math.abs(a.x - f.x) - Math.abs(b.x - f.x))[0];
+  }
+
+  private teamMembers(team: 0 | 1): FighterEntity[] {
+    return this.fighters.filter((f) => f.team === team);
+  }
+
+  private isTeamAlive(team: 0 | 1): boolean {
+    return this.teamMembers(team).some((f) => f.hp > 0);
+  }
+
+  private teamHpRatio(team: 0 | 1): number {
+    const members = this.teamMembers(team);
+    const max = members.reduce((sum, f) => sum + f.maxHp, 0);
+    return members.reduce((sum, f) => sum + f.hp, 0) / Math.max(1, max);
+  }
+
+  private isAiTurn(): boolean {
+    return this.mode === 'ia' && this.activeTeam === 1;
+  }
+
+  private getMaxRounds(): number {
+    return this.teamSize > 1 ? MAX_ROUNDS_TEAM : MAX_ROUNDS;
+  }
+
+  /** Fighters that dropped through the bottom of the map no longer take part in physics */
+  private isOffMap(f: FighterEntity): boolean {
+    return f.y > WORLD_H + 70;
+  }
+
   private createFighter(
-    index: 0 | 1,
+    index: number,
+    team: 0 | 1,
     runtime: LoadedNinjaRuntime,
     x: number,
     dir: 1 | -1
@@ -287,6 +377,7 @@ export class ShinobiBattleEngine {
       resolveRoleAnimationSlug(runtime.roles, new Set(runtime.animations.keys()), 'idle') || 'idle';
     return {
       index,
+      team,
       runtime,
       x,
       y: this.findGroundY(x),
@@ -440,7 +531,7 @@ export class ShinobiBattleEngine {
 
   public selectAction(choice: ActionChoice): void {
     const f = this.fighters[this.turnIndex];
-    if (this.phase !== 'aim' || (this.mode === 'ia' && this.turnIndex === 1)) return;
+    if (this.phase !== 'aim' || this.isAiTurn()) return;
     if (choice === 'ultimate') {
       if (f.chakra < 100 || f.statuses.seal > 0) return;
       f.armedAction = f.armedAction === 'ultimate' ? 'attack' : 'ultimate';
@@ -747,7 +838,7 @@ export class ShinobiBattleEngine {
       if (tl.firedParticles.has(10000 + idx) || elapsedMs < hEv.timeMs) return;
       tl.firedParticles.add(10000 + idx);
       const target =
-        tl.strike !== undefined ? this.fighters[tl.strike.targetIdx] : this.fighters[1 - f.index];
+        tl.strike !== undefined ? this.fighters[tl.strike.targetIdx] : this.nearestEnemy(f) || f;
       this.spawnStudioEffect({
         owner: f,
         spineId: hEv.spineId,
@@ -911,7 +1002,9 @@ export class ShinobiBattleEngine {
 
     if (st.actionKind === 'chase') {
       this.spawnBeams(att.x, att.y - att.runtime.bodyHeight * 0.5, att.dir);
-      this.showComboBanner(st.causesState, st.hitLabel, st.comboCount);
+      const label =
+        this.teamSize > 1 ? `${att.runtime.entry.name.split(' ')[0]} · ${st.hitLabel}` : st.hitLabel;
+      this.showComboBanner(st.causesState, label, st.comboCount);
     }
 
     const suffix = appliedStatusLabels.length > 0 ? ` · ${appliedStatusLabels.join(' · ')}` : '';
@@ -968,8 +1061,29 @@ export class ShinobiBattleEngine {
 
   /* ---------- Turn & Combat Flow ---------- */
 
+  /** Teams alternate; inside each team the living ninjas rotate in lineup order */
+  private advanceTurn(first: boolean): void {
+    if (!first) this.activeTeam = this.activeTeam === 0 ? 1 : 0;
+    const team = this.activeTeam;
+    const members = this.teamMembers(team);
+    for (let step = 1; step <= members.length; step++) {
+      const slot = (this.turnCursor[team] + step) % members.length;
+      if (members[slot].hp > 0) {
+        this.turnCursor[team] = slot;
+        this.turnIndex = members[slot].index;
+        this.focus[team] = this.turnIndex;
+        break;
+      }
+    }
+    const enemyTeam = team === 0 ? 1 : 0;
+    if (this.fighters[this.focus[enemyTeam]].hp <= 0) {
+      const alive = this.teamMembers(enemyTeam).find((f) => f.hp > 0);
+      if (alive) this.focus[enemyTeam] = alive.index;
+    }
+  }
+
   private startTurn(first = false): void {
-    if (!first) this.turnIndex = this.turnIndex === 0 ? 1 : 0;
+    this.advanceTurn(first);
     this.round++;
     this.wind = Math.round((Math.random() * 2 - 1) * 80) / 10;
     this.timerSec = TURN_TIME_SEC;
@@ -1006,14 +1120,11 @@ export class ShinobiBattleEngine {
     if (active.statuses.slow > 0) active.statuses.slow--;
     if (active.statuses.seal > 0) active.statuses.seal--;
 
-    if (this.round > MAX_ROUNDS) {
-      const r0 = this.fighters[0].hp / this.fighters[0].maxHp;
-      const r1 = this.fighters[1].hp / this.fighters[1].maxHp;
-      if (r0 !== r1) {
-        this.fighters[r0 > r1 ? 1 : 0].hp = 0;
-      } else {
-        this.fighters[0].hp = 0;
-        this.fighters[1].hp = 0;
+    if (this.round > this.getMaxRounds()) {
+      const r0 = this.teamHpRatio(0);
+      const r1 = this.teamHpRatio(1);
+      for (const f of this.fighters) {
+        if (r0 === r1 || f.team === (r0 > r1 ? 1 : 0)) f.hp = 0;
       }
     }
 
@@ -1037,7 +1148,10 @@ export class ShinobiBattleEngine {
       active.chakra = Math.min(100, active.chakra + 20);
     }
 
-    if (this.mode === 'ia' && this.turnIndex === 1) {
+    const foe = this.nearestEnemy(active);
+    if (foe) active.dir = foe.x >= active.x ? 1 : -1;
+
+    if (this.isAiTurn()) {
       this.planAiShot();
     } else {
       this.phase = 'aim';
@@ -1047,8 +1161,7 @@ export class ShinobiBattleEngine {
 
   private planAiShot(): void {
     this.phase = 'ai';
-    const ai = this.fighters[1];
-    const target = this.fighters[0];
+    const ai = this.fighters[this.turnIndex];
 
     if (ai.chakra >= 100 && ai.statuses.seal === 0) {
       ai.armedAction = 'ultimate';
@@ -1064,12 +1177,37 @@ export class ShinobiBattleEngine {
     }
 
     const origin = this.getLaunchOrigin(ai);
+
+    // Solve a shot for every living enemy, then pick the most valuable reachable one
+    const options = this.livingEnemies(ai).map((target) => {
+      const shot = this.solveAiShot(origin, target);
+      const reachable = shot.dist < Math.max(26, target.runtime.bodyWidth * 0.5);
+      const wounded = 1 - target.hp / target.maxHp;
+      const alreadyAirborne = target.air ? 0.15 : 0;
+      const score = (reachable ? 10 : -shot.dist / 100) + wounded * 2 + alreadyAirborne + Math.random() * 0.5;
+      return { shot, score };
+    });
+    options.sort((a, b) => b.score - a.score);
+    const best = options[0]?.shot || { angle: -Math.PI * 0.72, power: 0.7, dist: 1e9 };
+
+    const jitter = (Math.random() - 0.5) * 0.09;
+    this.aiPlan = {
+      angle: best.angle + jitter,
+      power: Math.min(1, Math.max(0.2, best.power * (1 + jitter * 0.65))),
+      delay: 1.35,
+    };
+  }
+
+  private solveAiShot(
+    origin: { x: number; y: number },
+    target: FighterEntity
+  ): { angle: number; power: number; dist: number } {
     const tx = target.x;
     const ty = target.y - target.runtime.bodyHeight * 0.5;
     let best = { angle: -Math.PI * 0.72, power: 0.7, dist: 1e9 };
 
     for (let i = 0; i < 130; i++) {
-      const right = tx > ai.x;
+      const right = tx > origin.x;
       const angle = right
         ? -(0.18 + Math.random() * 1.2)
         : -Math.PI + (0.18 + Math.random() * 1.2);
@@ -1095,12 +1233,7 @@ export class ShinobiBattleEngine {
       }
     }
 
-    const jitter = (Math.random() - 0.5) * 0.09;
-    this.aiPlan = {
-      angle: best.angle + jitter,
-      power: Math.min(1, Math.max(0.2, best.power * (1 + jitter * 0.65))),
-      delay: 1.35,
-    };
+    return best;
   }
 
   private getLaunchOrigin(f: FighterEntity): { x: number; y: number } {
@@ -1179,6 +1312,7 @@ export class ShinobiBattleEngine {
 
       for (const f of this.fighters) {
         if (f.hp <= 0) continue;
+        if (this.teamSize > 1 && f.team === att.team && f !== att) continue; // no friendly fire
         const dist = Math.hypot(x - f.x, y - (f.y - f.runtime.bodyHeight * 0.5));
         if (dist < craterR + 34) {
           const splashDmg = Math.round(att.runtime.entry.combat.baseDmg * 0.38);
@@ -1218,9 +1352,12 @@ export class ShinobiBattleEngine {
     this.afterTimer = 1.3;
 
     const effectiveChoice: ActionChoice = isUlt ? 'ultimate' : isSkill ? 'skill' : 'attack';
+    this.focus[hitFighter.team] = hitFighter.index;
     const dashSeq: DashSequence = {
       attackerIdx: att.index,
       targetIdx: hitFighter.index,
+      homes: new Map([[att.index, att.x]]),
+      returns: [],
       actionChoice: effectiveChoice,
       phase: 'approach',
       t: 0,
@@ -1230,7 +1367,6 @@ export class ShinobiBattleEngine {
       waitDur: 0,
       strikeElapsed: 0,
       strikeDur: 0.8,
-      xRet: att.x,
       xChaseStart: att.x,
       xChaseEnd: hitFighter.x,
       lastCausedState: 'popup',
@@ -1378,29 +1514,87 @@ export class ShinobiBattleEngine {
     this.emitUi(true);
   }
 
-  private findMatchingChaser(
-    att: FighterEntity,
-    tg: FighterEntity,
+  /** Chase skills of every ally still able to join the current chain, in lineup order */
+  private availableChasers(
     D: DashSequence
-  ): ChaseSkillSpec | undefined {
-    if (tg.hp <= 0 || D.usedChaserSlots.size >= 3) return undefined;
-    const chasers = att.runtime.entry.combat.chasers;
-    for (const ch of chasers) {
-      const key = `${ch.slot}:${ch.name}`;
-      if (D.usedChaserSlots.has(key)) continue;
-      if (
-        (tg.chaseState && ch.requiresStates.includes(tg.chaseState)) ||
-        (D.lastCausedState !== 'fall' && ch.requiresStates.includes(D.lastCausedState))
-      ) {
-        return ch;
+  ): Array<{ fighter: FighterEntity; chaser: ChaseSkillSpec; key: string }> {
+    const tg = this.fighters[D.targetIdx];
+    const limit = this.teamSize > 1 ? MAX_TEAM_CHAIN : 3;
+    if (tg.hp <= 0 || D.usedChaserSlots.size >= limit) return [];
+
+    const turnOwner = this.fighters[this.turnIndex];
+    const out: Array<{ fighter: FighterEntity; chaser: ChaseSkillSpec; key: string }> = [];
+    for (const fighter of this.teamMembers(turnOwner.team)) {
+      if (fighter.hp <= 0) continue;
+      // Allies outside their own turn need to be free to move
+      if (fighter !== turnOwner && fighter.statuses.paralysis > 0) continue;
+      if (fighter !== turnOwner && fighter.air && !D.homes.has(fighter.index)) continue;
+      for (const chaser of fighter.runtime.entry.combat.chasers) {
+        const key = `${fighter.index}:${chaser.slot}:${chaser.name}`;
+        if (!D.usedChaserSlots.has(key)) out.push({ fighter, chaser, key });
       }
     }
-    return undefined;
+    return out;
+  }
+
+  private findMatchingChaser(D: DashSequence) {
+    const tg = this.fighters[D.targetIdx];
+    return this.availableChasers(D).find(
+      ({ chaser }) =>
+        (tg.chaseState && chaser.requiresStates.includes(tg.chaseState)) ||
+        (D.lastCausedState !== 'fall' && chaser.requiresStates.includes(D.lastCausedState))
+    );
+  }
+
+  private ensureMoveAnim(f: FighterEntity): void {
+    const moveSlug = resolveRoleAnimationSlug(
+      f.runtime.roles,
+      new Set(f.runtime.animations.keys()),
+      'move'
+    );
+    if (f.animSlug !== moveSlug) {
+      this.playFighterRole(f, 'move', { loop: true, lockSec: 0 });
+    }
+  }
+
+  private queueReturn(D: DashSequence, f: FighterEntity): void {
+    const home = D.homes.get(f.index) ?? f.x;
+    f.silhouette = false;
+    f.lockSec = 0;
+    D.returns.push({
+      idx: f.index,
+      fromX: f.x,
+      toX: home,
+      t: 0,
+      dur: Math.min(0.55, 0.18 + Math.abs(f.x - home) / 3400),
+    });
+  }
+
+  private updateReturns(D: DashSequence, dt: number): void {
+    const tg = this.fighters[D.targetIdx];
+    D.returns = D.returns.filter((trip) => {
+      const f = this.fighters[trip.idx];
+      trip.t += dt;
+      const k = Math.min(1, trip.t / Math.max(0.05, trip.dur));
+      f.x = trip.fromX + (trip.toX - trip.fromX) * k;
+      f.y = this.findGroundY(f.x);
+      f.dir = trip.toX >= trip.fromX ? 1 : -1;
+      if (f.hp > 0) this.ensureMoveAnim(f);
+      if (k < 1) return true;
+      f.air = false;
+      f.vy = 0;
+      f.lockSec = 0;
+      f.dir = tg.x >= f.x ? 1 : -1;
+      if (f.hp > 0) this.playFighterRole(f, 'idle', { loop: true, lockSec: 0 });
+      return false;
+    });
   }
 
   private updateDash(dt: number): void {
     const D = this.dash;
     if (!D) return;
+    this.updateReturns(D, dt);
+
     const att = this.fighters[D.attackerIdx];
     const tg = this.fighters[D.targetIdx];
     const lerp = (a: number, b: number, k: number) => a + (b - a) * Math.min(1, Math.max(0, k));
@@ -1413,14 +1607,7 @@ export class ShinobiBattleEngine {
       att.x = lerp(D.x0, D.x1, D.t / Math.max(0.05, D.dashDur));
       att.y = this.findGroundY(att.x);
       att.dir = D.x1 >= D.x0 ? 1 : -1;
-      const moveSlug = resolveRoleAnimationSlug(
-        att.runtime.roles,
-        new Set(att.runtime.animations.keys()),
-        'move'
-      );
-      if (att.animSlug !== moveSlug) {
-        this.playFighterRole(att, 'move', { loop: true, lockSec: 0 });
-      }
+      this.ensureMoveAnim(att);
       if (D.t >= D.dashDur) {
         att.x = D.x1;
         att.y = this.findGroundY(att.x);
@@ -1441,27 +1628,35 @@ export class ShinobiBattleEngine {
         D.phase = 'chaseWait';
         D.t = 0;
         D.waitDur = 0;
-        D.xRet = att.x;
       }
     } else if (D.phase === 'chaseWait') {
       D.waitDur += dt;
-      const nextChaser = this.findMatchingChaser(att, tg, D);
+      const next = this.findMatchingChaser(D);
       const waitingForFall =
-        !nextChaser &&
+        !next &&
         tg.hp > 0 &&
         tg.air &&
-        att.runtime.entry.combat.chasers.some(
-          (ch) => !D.usedChaserSlots.has(`${ch.slot}:${ch.name}`) && ch.requiresStates.includes('fall')
-        );
+        this.availableChasers(D).some((c) => c.chaser.requiresStates.includes('fall'));
 
-      if (nextChaser) {
-        D.usedChaserSlots.add(`${nextChaser.slot}:${nextChaser.name}`);
-        D.activeChaser = nextChaser;
+      if (next) {
+        const ally = next.fighter;
+        if (ally.index !== att.index) {
+          // Hand the chain over: previous striker runs home while the ally dashes in
+          this.queueReturn(D, att);
+          const trip = D.returns.find((r) => r.idx === ally.index);
+          D.returns = D.returns.filter((r) => r.idx !== ally.index);
+          if (!trip && !D.homes.has(ally.index)) D.homes.set(ally.index, ally.x);
+          D.attackerIdx = ally.index;
+          this.focus[ally.team] = ally.index;
+        }
+        D.usedChaserSlots.add(next.key);
+        D.activeChaser = next.chaser;
         D.comboCount++;
         D.phase = 'chaseDash';
         D.t = 0;
-        D.xChaseStart = att.x;
-        D.xChaseEnd = tg.x + (tg.x >= att.x ? -60 : 60);
+        D.xChaseStart = ally.x;
+        const side = tg.x >= ally.x ? -60 : 60;
+        D.xChaseEnd = Math.min(WORLD_W - 30, Math.max(30, tg.x + side));
         audioEngine.playSynth('chase');
         this.pushCallout('PERSEGUIÇÃO!', tg.x, tg.y - tg.runtime.bodyHeight - 24, '#7DD3FC');
       } else if (waitingForFall && D.waitDur < 2.6) {
@@ -1469,20 +1664,13 @@ export class ShinobiBattleEngine {
       } else {
         D.phase = 'return';
         D.t = 0;
-        D.xRet = att.x;
+        this.queueReturn(D, att);
       }
     } else if (D.phase === 'chaseDash') {
       att.x = lerp(D.xChaseStart, D.xChaseEnd, D.t / 0.16);
       att.y = this.findGroundY(att.x);
       att.dir = D.xChaseEnd >= D.xChaseStart ? 1 : -1;
-      const moveSlug = resolveRoleAnimationSlug(
-        att.runtime.roles,
-        new Set(att.runtime.animations.keys()),
-        'move'
-      );
-      if (att.animSlug !== moveSlug) {
-        this.playFighterRole(att, 'move', { loop: true, lockSec: 0 });
-      }
+      this.ensureMoveAnim(att);
       if (D.t >= 0.16) {
         att.x = D.xChaseEnd;
         att.y = this.findGroundY(att.x);
@@ -1492,41 +1680,20 @@ export class ShinobiBattleEngine {
         D.t = 0;
         this.beginMeleeStrike(D, true);
       }
-    } else if (D.phase === 'return') {
-      att.silhouette = false;
-      att.x = lerp(D.xRet, D.x0, D.t / Math.max(0.05, D.dashDur));
-      att.y = this.findGroundY(att.x);
-      att.dir = D.x0 >= D.xRet ? 1 : -1;
-      const moveSlug = resolveRoleAnimationSlug(
-        att.runtime.roles,
-        new Set(att.runtime.animations.keys()),
-        'move'
-      );
-      if (att.animSlug !== moveSlug) {
-        this.playFighterRole(att, 'move', { loop: true, lockSec: 0 });
-      }
-      if (D.t >= D.dashDur) {
-        att.x = D.x0;
-        att.y = this.findGroundY(att.x);
-        att.air = false;
-        att.vy = 0;
-        att.lockSec = 0;
-        att.dir = tg.x >= att.x ? 1 : -1;
-        this.dash = null;
-        if (att.hp > 0) {
-          this.playFighterRole(att, 'idle', { loop: true, lockSec: 0 });
-        }
-      }
+    } else if (D.phase === 'return' && D.returns.length === 0) {
+      this.dash = null;
     }
   }
 
   private endMatch(): void {
     this.phase = 'over';
-    const aliveIdx = this.fighters.findIndex((f) => f.hp > 0);
-    this.winnerIndex = aliveIdx === 0 ? 0 : aliveIdx === 1 ? 1 : -1;
-    if (this.winnerIndex === 0 || this.winnerIndex === 1) {
-      const winner = this.fighters[this.winnerIndex];
-      this.playFighterRole(winner, 'win', { loop: true, lockSec: 0 });
+    const alive0 = this.isTeamAlive(0);
+    const alive1 = this.isTeamAlive(1);
+    this.winnerTeam = alive0 && !alive1 ? 0 : alive1 && !alive0 ? 1 : -1;
+    if (this.winnerTeam === 0 || this.winnerTeam === 1) {
+      const winners = this.teamMembers(this.winnerTeam).filter((f) => f.hp > 0);
+      for (const f of winners) this.playFighterRole(f, 'win', { loop: true, lockSec: 0 });
+      this.focus[this.winnerTeam] = winners[0].index;
       audioEngine.playSynth('win');
     }
     this.emitUi(true);
@@ -1559,6 +1726,7 @@ export class ShinobiBattleEngine {
     for (const f of this.fighters) {
       if (f.hitFlash > 0) f.hitFlash = Math.max(0, f.hitFlash - dt);
       this.tickFighterTimeline(f);
+      if (f.hp <= 0 && this.isOffMap(f)) continue;
 
       if (this.isSolid(f.x, f.y) && f.vy >= 0) {
         let steps = 0;
@@ -1569,7 +1737,7 @@ export class ShinobiBattleEngine {
         f.vy += FIGHTER_GRAVITY * dt;
         f.y += f.vy * dt;
         f.air = true;
-        if (f.y > WORLD_H + 70) f.hp = 0;
+        if (this.isOffMap(f)) f.hp = 0;
       } else {
         if (f.air) {
           f.air = false;
@@ -1601,7 +1769,8 @@ export class ShinobiBattleEngine {
 
       const isBusyInDash = Boolean(
         this.dash &&
-          (this.dash.attackerIdx === f.index ||
+          ((this.dash.attackerIdx === f.index && this.dash.phase !== 'return') ||
+            this.dash.returns.some((r) => r.idx === f.index) ||
             (this.dash.targetIdx === f.index && this.dash.phase !== 'return'))
       );
 
@@ -1647,7 +1816,7 @@ export class ShinobiBattleEngine {
     const canMove =
       this.phase === 'aim' &&
       this.moveDir !== 0 &&
-      !(this.mode === 'ia' && this.turnIndex === 1) &&
+      !this.isAiTurn() &&
       active.moveUsed < moveCap &&
       active.lockSec <= 0 &&
       !this.dash;
@@ -1702,7 +1871,6 @@ export class ShinobiBattleEngine {
     // 4. Projectile sub-stepped physics
     if (this.phase === 'fly' && this.projectile) {
       const pr = this.projectile;
-      const opponent = this.fighters[1 - this.turnIndex];
       const subSteps = 4;
       for (let s = 0; s < subSteps && this.phase === 'fly' && this.projectile; s++) {
         const sdt = dt / subSteps;
@@ -1713,14 +1881,15 @@ export class ShinobiBattleEngine {
         pr.trail.push([pr.x, pr.y]);
         if (pr.trail.length > 30) pr.trail.shift();
 
-        const hitHalfW = Math.max(22, opponent.runtime.bodyWidth * 0.45);
-        const hitH = opponent.runtime.bodyHeight;
-        if (
-          Math.abs(pr.x - opponent.x) < hitHalfW &&
-          pr.y > opponent.y - hitH &&
-          pr.y < opponent.y + 4
-        ) {
-          this.onProjectileImpact(pr.x, pr.y, opponent);
+        // Allies are passed through: only living enemies can be struck
+        const struck = this.livingEnemies(active).find(
+          (o) =>
+            Math.abs(pr.x - o.x) < Math.max(22, o.runtime.bodyWidth * 0.45) &&
+            pr.y > o.y - o.runtime.bodyHeight &&
+            pr.y < o.y + 4
+        );
+        if (struck) {
+          this.onProjectileImpact(pr.x, pr.y, struck);
         } else if (this.isSolid(pr.x, pr.y)) {
           this.onProjectileImpact(pr.x, pr.y, null);
         } else if (pr.x < -160 || pr.x > WORLD_W + 160 || pr.y > WORLD_H + 200) {
@@ -1739,6 +1908,14 @@ export class ShinobiBattleEngine {
       this.updateDash(dt);
     }
 
+    // A ninja that drops out of the map during its own turn forfeits it
+    if ((this.phase === 'aim' || this.phase === 'ai') && active.hp <= 0) {
+      this.aim = null;
+      this.aiPlan = null;
+      this.phase = 'after';
+      this.afterTimer = 0.9;
+    }
+
     // 6. After-shot turn transition
     if (this.phase === 'after') {
       this.afterTimer -= dt;
@@ -1746,9 +1923,11 @@ export class ShinobiBattleEngine {
         this.afterTimer <= 0 &&
         !this.dash &&
         !this.cutInPending &&
-        this.fighters.every((f) => !f.air && f.lockSec <= 0);
+        this.fighters.every(
+          (f) => (f.hp <= 0 && this.isOffMap(f)) || (!f.air && (f.hp <= 0 || f.lockSec <= 0))
+        );
       if (settled) {
-        if (this.fighters.some((f) => f.hp <= 0)) {
+        if (!this.isTeamAlive(0) || !this.isTeamAlive(1)) {
           this.endMatch();
         } else {
           this.startTurn(false);
@@ -1805,13 +1984,16 @@ export class ShinobiBattleEngine {
     if (this.phase === 'fly' && this.projectile) {
       camTarget = { x: this.projectile.x, y: this.projectile.y };
     } else if (this.dash) {
+      const striker = this.fighters[this.dash.attackerIdx];
       const tg = this.fighters[this.dash.targetIdx];
+      // While an ally is still crossing the map, keep the camera on the target
+      const from = Math.abs(striker.x - tg.x) > 420 ? tg : striker;
       camTarget = {
-        x: (active.x + tg.x) / 2,
-        y: Math.min(active.y, tg.y) - 85,
+        x: (from.x + tg.x) / 2,
+        y: Math.min(from.y, tg.y) - 85,
       };
-    } else if (this.phase === 'over' && (this.winnerIndex === 0 || this.winnerIndex === 1)) {
-      const w = this.fighters[this.winnerIndex];
+    } else if (this.phase === 'over' && (this.winnerTeam === 0 || this.winnerTeam === 1)) {
+      const w = this.fighters[this.focus[this.winnerTeam]];
       camTarget = { x: w.x, y: w.y - 85 };
     }
 
@@ -1900,7 +2082,7 @@ export class ShinobiBattleEngine {
     // 3. Destructible terrain
     ctx.drawImage(this.terrainCanvas, 0, 0);
 
-    const getFighterPos = (idx: 0 | 1) => {
+    const getFighterPos = (idx: number) => {
       const f = this.fighters[idx];
       return f ? { x: f.x, y: f.y, dir: f.dir } : null;
     };
@@ -1910,6 +2092,16 @@ export class ShinobiBattleEngine {
 
     // 5. Fighters anchored cleanly on ground via feet pivot
     for (const f of this.fighters) {
+      if (f.hp <= 0 && this.isOffMap(f)) continue;
+
+      // Team marker under every living ninja in squad battles
+      if (this.teamSize > 1 && f.hp > 0) {
+        ctx.fillStyle = f.team === 0 ? 'rgba(56, 189, 248, 0.34)' : 'rgba(244, 63, 94, 0.34)';
+        ctx.beginPath();
+        ctx.ellipse(f.x, f.y + 1, 36, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       // Ground shadow ellipse
       ctx.fillStyle = 'rgba(0, 0, 0, 0.34)';
       ctx.beginPath();
@@ -1917,7 +2109,7 @@ export class ShinobiBattleEngine {
       ctx.fill();
 
       // Target reticle ellipse under opponent during aiming
-      if (f.index === 1 - this.turnIndex && (this.phase === 'aim' || this.phase === 'ai')) {
+      if (f.team !== this.activeTeam && f.hp > 0 && (this.phase === 'aim' || this.phase === 'ai')) {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.82)';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1952,10 +2144,12 @@ export class ShinobiBattleEngine {
 
       // Overhead compact HP bar & turn marker
       const barY = f.y - f.runtime.bodyHeight - 16;
+      if (this.teamSize > 1 && f.hp <= 0) continue;
       ctx.fillStyle = 'rgba(6, 10, 24, 0.78)';
       ctx.fillRect(f.x - 28, barY, 56, 7);
       const hpRatio = Math.max(0, f.hp / Math.max(1, f.maxHp));
-      ctx.fillStyle = hpRatio > 0.35 ? '#22C55E' : '#EF4444';
+      const teamColor = this.teamSize > 1 && f.team === 1 ? '#FB7185' : '#22C55E';
+      ctx.fillStyle = hpRatio > 0.35 ? teamColor : '#EF4444';
       ctx.fillRect(f.x - 26, barY + 1.5, 52 * hpRatio, 4);
 
       if (f.index === this.turnIndex && this.phase !== 'over') {
@@ -1966,6 +2160,13 @@ export class ShinobiBattleEngine {
         ctx.lineTo(f.x, barY - 4);
         ctx.closePath();
         ctx.fill();
+      }
+
+      if (this.teamSize > 1) {
+        ctx.font = '700 11px "Plus Jakarta Sans", system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = f.team === 0 ? '#BAE6FD' : '#FECDD3';
+        ctx.fillText(f.runtime.entry.name.split(' ')[0], f.x, f.y + 20);
       }
 
       // Overhead status indicators (clean text labels)
@@ -2362,7 +2563,7 @@ export class ShinobiBattleEngine {
 
     if (
       this.phase === 'aim' &&
-      !(this.mode === 'ia' && this.turnIndex === 1) &&
+      !this.isAiTurn() &&
       this.fighters[this.turnIndex].lockSec <= 0
     ) {
       const active = this.fighters[this.turnIndex];
@@ -2468,6 +2669,8 @@ export class ShinobiBattleEngine {
   private toFighterHud(f: FighterEntity): FighterHudState {
     const e = f.runtime.entry;
     return {
+      index: f.index,
+      team: f.team,
       id: e.id,
       name: e.name,
       faceUrl: e.previewFaceUrl,
@@ -2487,6 +2690,27 @@ export class ShinobiBattleEngine {
     };
   }
 
+  private previewTurnQueue(length: number): number[] {
+    const queue = [this.turnIndex];
+    const cursor: [number, number] = [this.turnCursor[0], this.turnCursor[1]];
+    let team = this.activeTeam;
+    while (queue.length < length) {
+      team = team === 0 ? 1 : 0;
+      const members = this.teamMembers(team);
+      let next = members[0];
+      for (let step = 1; step <= members.length; step++) {
+        const slot = (cursor[team] + step) % members.length;
+        if (members[slot].hp > 0) {
+          cursor[team] = slot;
+          next = members[slot];
+          break;
+        }
+      }
+      queue.push(next.index);
+    }
+    return queue;
+  }
+
   private emitUi(force: boolean): void {
     if (!force && this.nowMs - this.lastUiEmit < 90) return;
     this.lastUiEmit = this.nowMs;
@@ -2495,9 +2719,13 @@ export class ShinobiBattleEngine {
 
     this.onUiUpdate({
       turnIndex: this.turnIndex,
+      activeTeam: this.activeTeam,
+      teamSize: this.teamSize,
+      focus: [this.focus[0], this.focus[1]],
+      turnQueue: this.previewTurnQueue(3),
       phase: this.phase,
       round: this.round,
-      maxRounds: MAX_ROUNDS,
+      maxRounds: this.getMaxRounds(),
       timerSec: Math.max(0, Math.ceil(this.timerSec)),
       wind: this.wind,
       hits: this.hits,
@@ -2514,8 +2742,8 @@ export class ShinobiBattleEngine {
             ninjaName: this.cutInPending.ninjaName,
           }
         : null,
-      fighters: [this.toFighterHud(this.fighters[0]), this.toFighterHud(this.fighters[1])],
-      winnerIndex: this.winnerIndex,
+      fighters: this.fighters.map((f) => this.toFighterHud(f)),
+      winnerTeam: this.winnerTeam,
       moveRemainingRatio: Math.max(0, 1 - active.moveUsed / Math.max(1, moveCap)),
     });
   }
