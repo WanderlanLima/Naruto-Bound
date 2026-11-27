@@ -1,0 +1,48 @@
+name: Testar versão Godot
+
+on:
+  push:
+    branches: [godot]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar o Godot estável mais recente
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download -R godotengine/godot --pattern '*stable_linux.x86_64.zip' --dir "$RUNNER_TEMP/godot"
+          unzip -q "$RUNNER_TEMP"/godot/*.zip -d "$RUNNER_TEMP/godot"
+          sudo install -m 755 "$RUNNER_TEMP"/godot/*stable_linux.x86_64 /usr/local/bin/godot
+          godot --version
+      - name: Importar o projeto
+        run: |
+          godot --headless --path godot --import 2>&1 | tee import.log
+          ! grep -E "SCRIPT ERROR|Parse Error" import.log
+      - name: Partidas simuladas
+        run: |
+          set -o pipefail
+          timeout 900 godot --headless --path godot --script res://tests/smoke.gd 2>&1 | tee smoke.log
+          grep -q "SMOKE OK" smoke.log
+          ! grep -E "SCRIPT ERROR|Parse Error" smoke.log
+      - name: Capturar telas dos golpes
+        run: |
+          set -o pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+          timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" godot --path godot --rendering-driver opengl3 --audio-driver Dummy --resolution 915x430 --script res://tests/screens.gd 2>&1 | tee screens.log
+          ! grep -E "SCRIPT ERROR|Parse Error" screens.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: godot-verificacao
+          path: |
+            *.log
+            godot/shots
+          if-no-files-found: ignore
