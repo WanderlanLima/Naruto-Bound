@@ -1,3 +1,4 @@
+import { combatImages } from './imageCache';
 import type {
   AnchorMetrics,
   AnimationEventsTimelineMs,
@@ -497,6 +498,7 @@ export function drawCompiledAnimationFrame(params: {
   const pageImg = anim.pages?.[frame.pageIndex];
   if (!pageImg || !pageImg.complete || pageImg.naturalWidth === 0) return;
 
+  const source = combatImages.source(pageImg);
   const animScale = charWorldScale / Math.max(0.05, anim.anchor.worldToPixelScale || 1);
   const facingSign = nativeFacing === 'left' ? -1 : 1;
   const scaleX = dir * facingSign * animScale;
@@ -533,10 +535,10 @@ export function drawCompiledAnimationFrame(params: {
         silCtx.save();
         silCtx.translate(0, sh);
         silCtx.rotate(-Math.PI / 2);
-        silCtx.drawImage(pageImg, srcX, srcY, frame.h * k, frame.w * k, 0, 0, frame.h, frame.w);
+        silCtx.drawImage(source, srcX, srcY, frame.h * k, frame.w * k, 0, 0, frame.h, frame.w);
         silCtx.restore();
       } else {
-        silCtx.drawImage(pageImg, srcX, srcY, frame.w * k, frame.h * k, 0, 0, frame.w, frame.h);
+        silCtx.drawImage(source, srcX, srcY, frame.w * k, frame.h * k, 0, 0, frame.w, frame.h);
       }
       silCtx.globalCompositeOperation = 'source-in';
       silCtx.fillStyle = silhouetteColor;
@@ -552,9 +554,9 @@ export function drawCompiledAnimationFrame(params: {
     // TexturePacker rotated 90deg CW in atlas -> rotate -90deg CCW when drawing
     ctx.translate(destX, destY + sss.h);
     ctx.rotate(-Math.PI / 2);
-    ctx.drawImage(pageImg, srcX, srcY, frame.h * k, frame.w * k, 0, 0, sss.h, sss.w);
+    ctx.drawImage(source, srcX, srcY, frame.h * k, frame.w * k, 0, 0, sss.h, sss.w);
   } else {
-    ctx.drawImage(pageImg, srcX, srcY, frame.w * k, frame.h * k, destX, destY, sss.w, sss.h);
+    ctx.drawImage(source, srcX, srcY, frame.w * k, frame.h * k, destX, destY, sss.w, sss.h);
   }
 
   ctx.restore();

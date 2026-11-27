@@ -46,11 +46,18 @@ export const SpritePreview: React.FC<SpritePreviewProps> = ({ ninja, height, cla
       const durMs = Math.max(200, meta.durationMs || Math.round((frameCount / (meta.fps || 24)) * 1000));
       const cols = Math.max(1, meta.cols || Math.floor(img.naturalWidth / fw) || 1);
       const t0 = performance.now();
+      let drawnIdx = -1;
 
       const draw = (now: number) => {
         if (!alive) return;
         const elapsed = (now - t0) % durMs;
         const idx = Math.min(frameCount - 1, Math.floor((elapsed / durMs) * frameCount));
+        // Only repaint when the animation actually advances a frame
+        if (idx === drawnIdx) {
+          rafId = requestAnimationFrame(draw);
+          return;
+        }
+        drawnIdx = idx;
 
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, drawW, drawH);

@@ -10,7 +10,9 @@ import {
 import {
   drawActiveEffectsLayer,
   type ActiveEffectInstance,
+  clearTintCache,
 } from './effectRenderer';
+import { combatImages } from './imageCache';
 import {
   drawCompiledAnimationFrame,
   sampleEmitterWorldPosition,
@@ -526,7 +528,20 @@ export class ShinobiBattleEngine {
     g.stroke();
     g.restore();
 
-    this.refreshTerrainMask();
+    this.clearMaskCircle(x, y, radius);
+  }
+
+  /** Updates collision in memory; reading the whole map back from the canvas stalls the frame */
+  private clearMaskCircle(cx: number, cy: number, radius: number): void {
+    const yFrom = Math.max(0, Math.floor(cy - radius));
+    const yTo = Math.min(WORLD_H - 1, Math.ceil(cy + radius));
+    for (let y = yFrom; y <= yTo; y++) {
+      const dy = y + 0.5 - cy;
+      const half = Math.sqrt(Math.max(0, radius * radius - dy * dy));
+      const xFrom = Math.max(0, Math.ceil(cx - half - 0.5));
+      const xTo = Math.min(WORLD_W - 1, Math.floor(cx + half - 0.5));
+      for (let x = xFrom; x <= xTo; x++) this.terrainMask[(y * WORLD_W + x) * 4 + 3] = 0;
+    }
   }
 
   /* ---------- Public Controls ---------- */
@@ -550,6 +565,7 @@ export class ShinobiBattleEngine {
     } else {
       f.armedAction = 'attack';
     }
+    this.prepareTextures();
     this.emitUi(true);
   }
 
@@ -588,6 +604,8 @@ export class ShinobiBattleEngine {
       this.cutInPending = null;
     }
     this.unbindInputEvents();
+    combatImages.clear();
+    clearTintCache();
   }
 
   /* ---------- Animation & Timeline Helpers ---------- */
@@ -1071,6 +1089,72 @@ export class ShinobiBattleEngine {
   /* ---------- Turn & Combat Flow ---------- */
 
   /** Teams alternate; inside each team the living ninjas rotate in lineup order */
+  /* ---------- Texture Preparation ---------- */
+
+  private findEffect(rt: LoadedNinjaRuntime, spineId: string, effectAnim: string) {
+    return {
+      sheet: this.lookupEffectSheet(rt, spineId, effectAnim),
+      spine:
+        rt.legacySpineEffects.get(spineId) ||
+        rt.legacySpineEffects.get(spineId.toLowerCase()) ||
+        rt.legacySpineEffects.get(toGameSlug(spineId, 'effect')),
+    };
+  }
+
+  /** Textures one attack needs: the ninja's own sheet plus every particle it triggers */
+  private attackImages(
+    f: FighterEntity,
+    role: AnimRoleKey,
+    preferredSlug?: string
+  ): HTMLImageElement[] {
+    const rt = f.runtime;
+    const slug = resolveRoleAnimationSlug(
+      rt.roles,
+      new Set(rt.animations.keys()),
+      role,
+      preferredSlug
+    );
+    const anim = slug ? rt.animations.get(slug) : undefined;
+    if (!anim) return [];
+    const images = [...(anim.pages || [])];
+    const own = anim.eventsMs;
+    const fallback =
+      role === 'attack' || role === 'skill' || role === 'ultimate' || role === 'chase'
+        ? rt.actionEvents?.[role]
+        : undefined;
+    const events = own.particles.length || own.hits.length ? own : fallback || own;
+    for (const ev of [...events.particles, ...events.hits]) {
+      const effect = this.findEffect(rt, ev.spineId, ev.effectAnim);
+      images.push(...(effect?.sheet?.pages || effect?.spine?.pages || []));
+    }
+    return images.filter(Boolean);
+  }
+
+  private chaserImages(f: FighterEntity, chaser: ChaseSkillSpec): HTMLImageElement[] {
+    return this.attackImages(f, 'chase', chaser.animSlug);
+  }
+
+  /** Asks the cache to decode, ahead of time, what the coming turn can put on screen */
+  private prepareTextures(choice?: ActionChoice, urgent: HTMLImageElement[] = []): void {
+    const owner = this.fighters[this.turnIndex];
+    if (!owner) return;
+    const list = [...urgent];
+    // Reactions and movement of everyone on the field
+    for (const role of ['idle', 'hurt', 'fall', 'move', 'fly'] as AnimRoleKey[]) {
+      for (const f of this.fighters) if (f.hp > 0) list.push(...this.attackImages(f, role));
+    }
+    const action = choice || owner.armedAction;
+    list.push(...this.attackImages(owner, action));
+    if (action !== 'attack') list.push(...this.attackImages(owner, 'attack'));
+    for (const ally of this.teamMembers(owner.team)) {
+      if (ally.hp <= 0) continue;
+      for (const chaser of ally.runtime.entry.combat.chasers) {
+        list.push(...this.chaserImages(ally, chaser));
+      }
+    }
+    combatImages.want(list);
+  }
+
   private advanceTurn(first: boolean): void {
     if (!first) this.activeTeam = this.activeTeam === 0 ? 1 : 0;
     const team = this.activeTeam;
@@ -1103,6 +1187,7 @@ export class ShinobiBattleEngine {
     const active = this.fighters[this.turnIndex];
     active.moveUsed = 0;
     active.armedAction = 'attack';
+    this.prepareTextures();
 
     // Tick status effects at start of turn
     if (active.statuses.burn > 0 && active.hp > 0) {
@@ -1286,6 +1371,7 @@ export class ShinobiBattleEngine {
       bodyHeight: f.runtime.bodyHeight,
     });
 
+    this.prepareTextures(f.armedAction);
     this.spawnMuzzleBurst(origin.x, origin.y, angle, f.runtime.entry.combat.nature);
     audioEngine.playSynth('launch');
 
@@ -1659,6 +1745,7 @@ export class ShinobiBattleEngine {
           this.focus[ally.team] = ally.index;
         }
         D.usedChaserSlots.add(next.key);
+        this.prepareTextures(D.actionChoice, this.chaserImages(ally, next.chaser));
         D.activeChaser = next.chaser;
         D.comboCount++;
         D.phase = 'chaseDash';
@@ -2061,6 +2148,9 @@ export class ShinobiBattleEngine {
 
     const ctx = this.ctx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Warm up one prepared texture per frame; the sky painted next covers the probe pixel
+    combatImages.uploadNext(ctx);
 
     // 1. Atmospheric moonlit shinobi valley sky
     const sky = ctx.createLinearGradient(0, 0, 0, ch);

@@ -1,4 +1,5 @@
 import type { CompiledAnimation, LegacySpineData } from '../types/shinobi';
+import { combatImages } from './imageCache';
 import { drawCompiledAnimationFrame } from './spriteAnimator';
 
 export interface ActiveEffectInstance {
@@ -22,8 +23,18 @@ export interface ActiveEffectInstance {
 
 /* ---------- Fixed Legacy Spine Renderer (supports rotate, RGB tint, additive blend) ---------- */
 
-const tintCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
-const tintCtx = tintCanvas ? tintCanvas.getContext('2d') : null;
+/* Tinted atlas pieces are built once and reused instead of being recomposed every frame */
+const TINT_CACHE_MAX_PIXELS = 6_000_000;
+const TINT_STEPS = 20;
+const tintCache = new Map<string, HTMLCanvasElement>();
+const imageIds = new WeakMap<HTMLImageElement, number>();
+let tintCachePixels = 0;
+let nextImageId = 0;
+
+export function clearTintCache(): void {
+  tintCache.clear();
+  tintCachePixels = 0;
+}
 
 function parseHexRgba(s?: string): [number, number, number, number] {
   const hex = s || 'ffffffff';
@@ -160,6 +171,64 @@ function computeSpinePose(sp: LegacySpineData, animName: string, t: number) {
   return world;
 }
 
+function getTintedPiece(
+  img: HTMLImageElement,
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+  isRot90: boolean,
+  r: number,
+  g: number,
+  b: number
+): HTMLCanvasElement | null {
+  let id = imageIds.get(img);
+  if (id === undefined) imageIds.set(img, (id = ++nextImageId));
+  const step = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * TINT_STEPS);
+  const [qr, qg, qb] = [step(r), step(g), step(b)];
+  const key = `${id}:${sx},${sy},${sw},${sh}:${qr},${qg},${qb}`;
+  const hit = tintCache.get(key);
+  if (hit) {
+    tintCache.delete(key);
+    tintCache.set(key, hit);
+    return hit;
+  }
+
+  const piece = document.createElement('canvas');
+  piece.width = Math.max(1, Math.ceil(sw));
+  piece.height = Math.max(1, Math.ceil(sh));
+  const g2d = piece.getContext('2d');
+  if (!g2d) return null;
+  const source = combatImages.source(img);
+  const paintRegion = () => {
+    if (isRot90) {
+      g2d.save();
+      g2d.translate(0, sh);
+      g2d.rotate(-Math.PI / 2);
+      g2d.drawImage(source, sx, sy, sh, sw, 0, 0, sh, sw);
+      g2d.restore();
+    } else {
+      g2d.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
+    }
+  };
+  paintRegion();
+  g2d.globalCompositeOperation = 'multiply';
+  const channel = (q: number) => Math.round((q / TINT_STEPS) * 255);
+  g2d.fillStyle = `rgb(${channel(qr)},${channel(qg)},${channel(qb)})`;
+  g2d.fillRect(0, 0, sw, sh);
+  g2d.globalCompositeOperation = 'destination-in';
+  paintRegion();
+
+  tintCache.set(key, piece);
+  tintCachePixels += piece.width * piece.height;
+  for (const [oldKey, old] of tintCache) {
+    if (tintCachePixels <= TINT_CACHE_MAX_PIXELS || old === piece) break;
+    tintCache.delete(oldKey);
+    tintCachePixels -= old.width * old.height;
+  }
+  return piece;
+}
+
 function drawTintedRegion(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -178,50 +247,24 @@ function drawTintedRegion(
 ) {
   const needsTint = r < 0.96 || g < 0.96 || b < 0.96;
   const isRot90 = rotated === true || rotated === 90;
-  const srcW = isRot90 ? sh : sw;
-  const srcH = isRot90 ? sw : sh;
 
-  if (needsTint && tintCanvas && tintCtx && srcW > 0 && srcH > 0) {
-    tintCanvas.width = Math.max(1, Math.ceil(sw));
-    tintCanvas.height = Math.max(1, Math.ceil(sh));
-    tintCtx.clearRect(0, 0, tintCanvas.width, tintCanvas.height);
-
-    if (isRot90) {
-      tintCtx.save();
-      tintCtx.translate(0, sh);
-      tintCtx.rotate(-Math.PI / 2);
-      tintCtx.drawImage(img, sx, sy, srcW, srcH, 0, 0, sh, sw);
-      tintCtx.restore();
-    } else {
-      tintCtx.drawImage(img, sx, sy, srcW, srcH, 0, 0, sw, sh);
+  if (needsTint && sw > 0 && sh > 0) {
+    const piece = getTintedPiece(img, sx, sy, sw, sh, isRot90, r, g, b);
+    if (piece) {
+      ctx.drawImage(piece, 0, 0, sw, sh, dx, dy, dw, dh);
+      return;
     }
-
-    tintCtx.globalCompositeOperation = 'multiply';
-    tintCtx.fillStyle = `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})`;
-    tintCtx.fillRect(0, 0, sw, sh);
-    tintCtx.globalCompositeOperation = 'destination-in';
-    if (isRot90) {
-      tintCtx.save();
-      tintCtx.translate(0, sh);
-      tintCtx.rotate(-Math.PI / 2);
-      tintCtx.drawImage(img, sx, sy, srcW, srcH, 0, 0, sh, sw);
-      tintCtx.restore();
-    } else {
-      tintCtx.drawImage(img, sx, sy, srcW, srcH, 0, 0, sw, sh);
-    }
-    tintCtx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(tintCanvas, 0, 0, sw, sh, dx, dy, dw, dh);
-    return;
   }
 
+  const source = combatImages.source(img);
   if (isRot90) {
     ctx.save();
     ctx.translate(dx, dy + dh);
     ctx.rotate(-Math.PI / 2);
-    ctx.drawImage(img, sx, sy, srcW, srcH, 0, 0, dh, dw);
+    ctx.drawImage(source, sx, sy, sh, sw, 0, 0, dh, dw);
     ctx.restore();
   } else {
-    ctx.drawImage(img, sx, sy, srcW, srcH, dx, dy, dw, dh);
+    ctx.drawImage(source, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 }
 

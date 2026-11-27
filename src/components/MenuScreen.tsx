@@ -30,6 +30,8 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
     []
   );
 
+  const previewHeight = typeof window !== 'undefined' && window.innerHeight < 500 ? 96 : 130;
+
   const importedCount = roster.filter(
     (n) => n.source === 'imported-phaser' || n.source === 'imported-legacy'
   ).length;
@@ -37,6 +39,16 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
 
   return (
     <section className="relative flex h-full w-full flex-col overflow-hidden bg-[#0B1020]">
+      <button
+        type="button"
+        onClick={onOpenImport}
+        title="ZIP shinobi-phaser-v1, legado .001/.002 ou index.json"
+        className="absolute z-20 flex min-h-[40px] items-center gap-2 rounded-lg border border-dashed border-amber-500/50 bg-[#1A1A28]/95 px-3 text-xs font-semibold text-amber-100 transition-colors duration-150 hover:border-amber-400 hover:bg-amber-500/15"
+        style={{ top: 'calc(var(--sa-t) + 10px)', right: 'calc(var(--sa-r) + 12px)' }}
+      >
+        <Upload className="h-4 w-4 shrink-0 text-amber-400" />
+        Importar ninja
+      </button>
       {/* Atmospheric night backdrop */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -63,24 +75,25 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
         ))}
       </div>
 
-      {/* Main Content Split */}
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col justify-between gap-6 px-6 py-6 md:flex-row md:items-center md:gap-12 md:px-12 md:py-10">
+      {/* Main Content Split: side by side whenever the screen is wide or lying down; scrolls if it still overflows */}
+      <div className="relative z-10 h-full w-full overflow-y-auto overscroll-contain">
+      <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col justify-between gap-6 px-6 pb-6 pt-16 md:flex-row md:items-center md:gap-12 md:px-12 md:py-14 landscape:flex-row landscape:items-center [@media(max-height:500px)]:gap-5 [@media(max-height:500px)]:px-5 [@media(max-height:500px)]:pb-3 [@media(max-height:500px)]:pt-14">
         {/* Left Hero Anchor & Animated Shinobi Crew */}
-        <div className="flex flex-1 flex-col justify-between gap-6">
+        <div className="flex min-w-0 flex-1 flex-col justify-between gap-6 [@media(max-height:500px)]:gap-1">
           <div>
             <p className="text-xs font-medium tracking-wide text-amber-300/90">
               Artilharia ninja por turnos · {roster.length} ninjas disponíveis
               {repoCount > 0 ? ` · ${repoCount} do repositório` : ''}
               {importedCount > 0 ? ` · ${importedCount} importado(s)` : ''}
             </p>
-            <h1 className="font-display mt-2 text-5xl font-black uppercase leading-[0.9] tracking-tight text-white sm:text-6xl lg:text-7xl">
+            <h1 className="font-display mt-2 text-5xl font-black uppercase leading-[0.9] tracking-tight text-white sm:text-6xl lg:text-7xl [@media(max-height:500px)]:text-4xl">
               <span className="bg-gradient-to-b from-amber-100 via-amber-300 to-orange-500 bg-clip-text text-transparent">
                 SHINOBI
               </span>
               <br />
               <span>ARTILLERY</span>
             </h1>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-300">
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-300 [@media(max-height:500px)]:mt-2 [@media(max-height:500px)]:text-xs">
               Mire por arraste, domine o vento, destrua o terreno e encadeie combos de perseguição e técnicas Ôgi sincronizadas em tempo real.
             </p>
           </div>
@@ -93,14 +106,14 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                 className="relative flex flex-col items-center justify-end"
                 title={n.name}
               >
-                <SpritePreview ninja={n} height={130} />
+                <SpritePreview ninja={n} height={previewHeight} />
               </div>
             ))}
           </div>
         </div>
 
         {/* Right Primary Actions */}
-        <div className="flex w-full shrink-0 flex-col gap-3 md:w-[340px]">
+        <div className="flex w-full shrink-0 flex-col gap-3 md:w-[340px] landscape:w-[300px] md:landscape:w-[340px]">
           <div
             className="grid grid-cols-2 gap-1 rounded-xl border border-slate-700/90 bg-[#0F162D]/90 p-1"
             role="group"
@@ -160,24 +173,8 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
             </div>
             <ChevronRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-amber-300" />
           </button>
-
-          <button
-            type="button"
-            onClick={onOpenImport}
-            className="group flex min-h-[56px] w-full items-center justify-between rounded-xl border border-dashed border-amber-500/45 bg-amber-500/10 px-5 py-3 text-left text-amber-100 transition-colors duration-150 hover:border-amber-400 hover:bg-amber-500/15"
-          >
-            <div className="flex items-center gap-3.5">
-              <Upload className="h-5 w-5 shrink-0 text-amber-400" />
-              <div>
-                <div className="text-sm font-semibold leading-tight">Importar Ninja / Assets</div>
-                <div className="text-xs text-amber-200/75">
-                  ZIP shinobi-phaser-v1, legado .001/.002 ou index.json
-                </div>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-amber-300" />
-          </button>
         </div>
+      </div>
       </div>
     </section>
   );
