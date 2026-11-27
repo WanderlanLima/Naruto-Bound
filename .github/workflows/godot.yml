@@ -37,7 +37,15 @@ jobs:
           set -o pipefail
           sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
           timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" godot --path godot --rendering-driver opengl3 --audio-driver Dummy --resolution 915x430 --script res://tests/screens.gd 2>&1 | tee screens.log
+          grep -q "TELAS OK" screens.log
           ! grep -E "SCRIPT ERROR|Parse Error" screens.log
+      - name: Testar a interface com cliques e arrasto
+        if: success() || failure()
+        run: |
+          set -o pipefail
+          timeout 600 xvfb-run -a -s "-screen 0 1280x720x24" godot --path godot --rendering-driver opengl3 --audio-driver Dummy --resolution 915x430 --script res://tests/ui.gd 2>&1 | tee ui.log
+          grep -q "UI OK" ui.log
+          ! grep -E "SCRIPT ERROR|Parse Error" ui.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
